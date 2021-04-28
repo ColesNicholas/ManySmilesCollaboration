@@ -1,0 +1,726 @@
+---
+title: 'Data Processing Code for the Many Smiles Collaboration'
+editor_options:
+  chunk_output_type: console
+---
+## Setup R environment
+```{r message = FALSE, results = "hide"}
+# clear environment
+rm(list = ls())
+
+# install (if necessary) and load packages
+  # function written by stevenworthington 
+  Ipak <- function(pkg){
+      new.pkg <- pkg[!(pkg %in% installed.packages()[, 'Package'])]
+      
+      if (length(new.pkg)) 
+          install.packages(new.pkg, dependencies = TRUE)
+      
+      sapply(pkg, require, character.only = TRUE)
+  }
+
+  # vector of necessary packages
+  packages <- c('tidyverse', 'qualtRics', 
+                'googlesheets4', 'readxl')
+  
+  # using vector of packages, call ipak function
+  Ipak(packages)
+  
+  # delete vestigial
+  rm(packages, Ipak)
+
+# allow for Type III SS
+options(contrasts = c('contr.sum', 'contr.poly'))
+```
+
+## Open data via Qualtrics API
+Set API credentials
+```{r eval = FALSE}
+qualtrics_api_credentials(
+  api_key = 'Qtd8CzAV5LeEfGyQQiMBpF8YXSq7zHbKF5A0j1Mn', 
+  base_url = 'sjc1.qualtrics.com',
+  install = TRUE,
+  overwrite = TRUE)
+```
+
+Load data
+```{r}
+DF <- all_surveys() %>% 
+  fetch_survey(surveyID = 'SV_1MHZifyxXFTQMGp',
+               force_request = TRUE,
+               label = FALSE,
+               convert = FALSE,
+               fileEncoding = "UTF-8")
+```
+
+## Fix documented issues
+Issue Report 1/11/2021 15:27:16
+```{r}
+DF[DF$ResponseId == 'R_71mBhLa0wTLkE9P', ]$lab <- "USA_02"
+DF[DF$ResponseId == 'R_71mBhLa0wTLkE9P', ]$mode <- "online"
+
+DF[DF$ResponseId == 'R_Y5eNgLXGXayulH3', ]$lab <- "USA_02"
+DF[DF$ResponseId == 'R_Y5eNgLXGXayulH3', ]$mode <- "online"
+
+DF[DF$ResponseId == 'R_336V86Y5lFAErTD', ]$lab <- "USA_02"
+DF[DF$ResponseId == 'R_336V86Y5lFAErTD', ]$mode <- "online"
+```
+
+Issue Report 3/10/2021 13:04:13
+```{r}
+DF <- DF %>% 
+  filter(ResponseId != "R_24pYUstgkOOGxLs",
+         ResponseId != "R_ZrG6EKkXCgsUcCd",
+         ResponseId != "R_Y4eZs4E4YuVAZfH",
+         ResponseId != "R_3nTmxu3vObT2JHh",
+         ResponseId != "R_3g0zJDrM9ytHC71",
+         ResponseId != "R_28Aq1V3WJBwwpNM",
+         ResponseId != "R_3lEs4Szd6p5WnkU",
+         ResponseId != "R_sALi2EPfHu7xhGp")
+```
+
+Issue Report 2/1/2021 11:06:16
+```{r}
+DF[!is.na(DF$comp_code) & DF$comp_code == 50011, ]$lab <- "GBR_01"
+DF[!is.na(DF$comp_code) & DF$comp_code == 50011, ]$mode <- "online"
+```
+
+Issue Report 3/10/2021 16:00:55
+```{r}
+ids <-
+  c("R_1GD4F1SkMf9kfej", "R_9Y64npYAReaM2bv", 
+    "R_1Dr0VPNxpieom2m", "R_33d5XLn9fbq9xKK",
+    "R_25A6NQrZvWRKUL4", "R_2PjsokzhdsD2vZj",
+    "R_2Qtk9qpd520bKMP", "R_e38EizEqLMVfA09",
+    "R_2BmrrTge0O7l4SU", "R_1jSOkeCyxfswvNN",
+    "R_3KrLO7nsoiAFwsL", "R_1ovashQAQ6fDomE",
+    "R_1Ej0NXzFob65t2o", "R_NVzxKo4NqK0U7fP",
+    "R_3FUqkkW2BKltGmW", "R_1jkPjgj145hnjtV",
+    "R_3nIfmyaH4kOeJcB", "R_2WHxeiVG0if6IDO",
+    "R_2TFfFcUCVAAsVH7", "R_UEdaTAgiXo7qnbb")
+
+for (i in ids){
+  DF[DF$ResponseId == i, ]$lab <- "AUS_01"
+  DF[DF$ResponseId == i, ]$mode <- "online"
+}
+
+rm(i, ids)
+```
+
+Issue Report 3/11/2021 12:27:11
+```{r}
+DF <- DF %>% 
+  filter(ResponseId != 'R_1FQAgvtC22eIEmo')
+```
+
+Issue Report 4/13/2021 12:32:27
+```{r}
+DF <- DF %>% 
+  filter(ResponseId != 'R_3ff7VJO1aIUfhrY',
+         ResponseId != 'R_3J7VlYAposubTqQ',
+         ResponseId != 'R_2as3VAy174nEEUE',
+         ResponseId != 'R_25NJqFnThS6T9gw')
+```
+
+Issue Report 4/19/2021 16:10:38
+```{r}
+DF <- DF %>% 
+  filter(ResponseId != 'R_3PSwb7kaUELPdOQ',
+         ResponseId != 'R_2TTWPmgmGBzJo4u',
+         ResponseId != 'R_31aRdUehVCYMrRo',
+         ResponseId != 'R_1QDTXhBqAGOgMu0',
+         ResponseId != 'R_22ulZEcvoGxSUAk')
+```
+
+
+## Prep data review and coding sheets
+Identify lab
+```{r eval = FALSE}
+# site <- "USA_02"
+# site <- "ISR_01"
+# site <- 'USA_03'
+# site <- 'DEU_01'
+# site <- 'TUR_01'
+# site <- 'POL_01'
+# site <- 'JPN_01'
+# site <- 'HUN_01'
+# site <- 'FRA_01'
+# site <- 'ESP_01'
+# site <- 'CHE_01'
+# site <- 'KEN_01'
+# site <- 'POL_02'
+site <- 'COL_03'
+```
+
+Create review sheet
+```{r eval = FALSE}
+review <- DF %>% 
+  # select site-specific data
+  filter(as.character(lab) == site) %>% 
+  
+  # select relevant variables
+  select(DistributionChannel, StartDate, Progress,
+         aware_intv_q01, aware_intv_q03,
+         quali_chek_que) %>% 
+  
+  # create column for identifying issues
+  mutate(Participant.Miscategorized = "",
+         Note = "") %>% 
+  
+  # rename columns
+  rename(DataClassification = DistributionChannel) %>% 
+   
+  # sort
+  arrange(desc(DataClassification),
+          StartDate)
+
+# rename levels of Test
+review[review$DataClassification == "preview", ]$DataClassification <- "test"
+review[review$DataClassification == "anonymous", ]$DataClassification <- "real"
+  
+gs4_create(paste0(site, "_DataClassification"),
+           sheets = review)
+```
+
+Create coding sheets
+```{r eval = FALSE}
+coding <- DF %>% 
+  # select site-specific non-test data
+  filter(as.character(lab) == site,
+         DistributionChannel != 'preview') %>% 
+  
+  # randomize order
+  mutate(rand = runif(n = nrow(.))) %>% 
+  arrange(rand) %>% 
+  
+  # create blank coding columns
+  mutate(Awareness = "",
+         Distraction = "") %>% 
+  
+  # select relevant variables
+  select(ResponseId, 
+         aware_intv_q01, aware_intv_q02, aware_intv_q03, 
+         Awareness, quali_chek_que, Distraction)
+
+gs4_create(paste0(site, "_coder1"),
+           sheets = coding)
+```
+
+## Open and merge open-ended data
+```{r}
+# create blank dataframe for coding data
+coding.DF <- data.frame(Awareness1 = numeric(),
+                        Distraction1 = numeric(),
+                        Awareness2 = numeric(),
+                        Distraction2 = numeric())
+
+# create list of countries
+countries <- c("USA_02", "NOR_01", "ESP_01")
+
+# append coding data to coding.DF
+for (c in countries){
+  # coder 1
+  ## open coding file
+  coder1 <- 
+    read_excel(path = 
+                 paste0("coding/",
+                        c,
+                        "_coder1.xlsx"),
+               col_types = 
+                 c("text", 
+                   "skip", "skip", "skip",
+                   "numeric",
+                   "skip",
+                   "numeric"),
+               na = c("N/A", "NA")) %>% 
+  
+  ## append coder number to columns
+  rename_at(.vars = vars(Awareness, Distraction), 
+            function(x) paste0(x,
+                               1))
+  
+  # coder 2
+  ## open coding file
+  coder2 <- 
+    read_excel(path = 
+                 paste0("coding/",
+                        c,
+                        "_coder2.xlsx"),
+               col_types = 
+                 c("text", 
+                   "skip", "skip", "skip",
+                   "numeric",
+                   "skip",
+                   "numeric"),
+               na = c("N/A", "NA")) %>% 
+  
+  ## append coder number to columns
+  rename_at(.vars = vars(Awareness, Distraction), 
+            function(x) paste0(x,
+                               2))
+  
+  # merge two coders' data
+  coder <- full_join(x = coder1, y = coder2,
+                     by = 'ResponseId')
+  
+  # merge coding data with coding dataframe
+  coding.DF <- rbind(coding.DF,
+                     coder)
+}
+
+# merge coding.DF data with main dataframe
+DF <- full_join(x = DF, y = coding.DF, 
+                by = "ResponseId")
+
+# delete vestigial
+rm(coder, coder1, coder2, coding.DF, c, countries)
+```
+
+```{r eval = F}
+# add coding columns to main dataframe
+DF <- DF %>% 
+  mutate(Awareness1 = NA,
+         Distraction1 = NA,
+         Awareness2 = NA,
+         Distraction2 = NA)
+
+# create list of countries
+countries <- c("USA_02", "NOR_01", "ESP_01")
+
+for (c in countries){
+  # coder 1
+  ## open coding file
+  coder1 <- 
+    read_excel(path = 
+                 paste0("coding/",
+                        c,
+                        "_coder1.xlsx"),
+               col_types = 
+                 c("text", 
+                   "skip", "skip", "skip",
+                   "numeric",
+                   "skip",
+                   "numeric"),
+               na = c("N/A", "NA")) %>% 
+  
+  ## append coder number to columns
+  rename_at(.vars = vars(Awareness, Distraction), 
+            function(x) paste0(x,
+                               1))
+  
+  # coder 2
+  ## open coding file
+  coder2 <- 
+    read_excel(path = 
+                 paste0("coding/",
+                        c,
+                        "_coder2.xlsx"),
+               col_types = 
+                 c("text", 
+                   "skip", "skip", "skip",
+                   "numeric",
+                   "skip",
+                   "numeric"),
+               na = c("N/A", "NA")) %>% 
+  
+  ## append coder number to columns
+  rename_at(.vars = vars(Awareness, Distraction), 
+            function(x) paste0(x,
+                               2))
+  
+  # merge two coders' data
+  coder <- full_join(x = coder1, y = coder2,
+                     by = 'ResponseId')
+  
+  # merge coding data with main dataframe
+  DF <- full_join(x = DF, y = coder)
+}
+
+# delete vestigial
+rm(coder1, coder2, coder, c, countries)
+```
+
+```{r eval = FALSE}
+DF %>% 
+  filter(lab == "USA_02" |
+         lab == "NOR_01" |
+         lab == "ESP_01") %>% 
+  group_by(lab) %>% 
+  summarise(Awareness.M = mean(Awareness),
+            Awareness.min = min(Awareness),
+            Awareness.max = max(Awareness),
+            Distraction.M = mean(Distraction),
+            Distraction.min = min(Distraction),
+            Distraction.max = max(Distraction))
+```
+
+## Clean data
+Remove test data, add subject ids, and select relevant variables
+```{r}
+DF <- DF %>% 
+  # remove test data
+  filter(DistributionChannel != 'preview') %>% 
+  
+  # remove incomplete observations
+  filter(Progress > 90) %>% 
+  
+  # select relevant variables
+  select(
+    # subject id and condition identifiers 
+    ResponseId, lab, mode, UserLanguage, condition, image,
+    
+    # filler 1 responses
+    fil.1_emot_ang : fil.1_emot_wor,
+    fil.1_diff_dq1, fil.1_like_tsk,
+    
+    # neutral trial responses
+    neutr_emot_ang : neutr_emot_wor,
+    neutr_diff_dq1, neutr_like_tsk,
+    
+    # happy trial responses
+    happy_emot_ang : happy_emot_wor,
+    happy_diff_dq1, happy_like_tsk,
+    
+    # filler 4 responses
+    fil.4_emot_ang : fil.4_emot_wor,
+    fil.4_diff_dq1, fil.4_like_tsk,
+    
+    # individual differences
+    indiv_gend_var, indiv_agee_var,
+    indiv_body_001 : indiv_body_018,
+    
+    # quality control variables
+    Progress, `Duration (in seconds)`,
+    `metaa_data_que_Operating System`,
+    
+    intro_filt_1 : intro_filt_3, 
+    
+    fil.1_math_mq1, neutr_math_mq1, 
+    happy_math_mq1, fil.4_math_mq1, 
+    
+    neutr_diff_att, happy_diff_att,
+    
+    qulty_rate_var, qulty_feel_var, 
+    descr_smlr_tx1, qulty_smlr_var,
+    )
+```
+
+Code for whether participants meet inclusion criteria
+- Failed attention checks
+- Indicated that they did not follow pose expression
+- Indicated that their expression did not match the image of an actor completing the task correctly
+- Did not complete study on desktop computer or laptop (will want to check that OS's are correct)
+- Awareness of ffh (don't have this yet)
+- Indicated that they were very distracted (don't have this yet)
+
+```{r}
+DF <- DF %>% 
+  # individual inclusion criterion
+  mutate(
+         # attention check items
+         inc.att = if_else(condition = neutr_diff_att == 7 &
+                             happy_diff_att == 7,
+                           true = 1,
+                           false = 0),
+         
+         # participant ratings of degree to which they followed instructions 
+         inc.fol = if_else(condition = qulty_rate_var > 1,
+                           true = 1,
+                           false = 0),
+         
+         # participant ratings of degree to which posed expressions matched image of actor
+         inc.mat = if_else(condition = qulty_smlr_var > 1,
+                           true = 1,
+                           false = 0),
+         
+         # browser
+         inc.dev = if_else(condition = 
+                             `metaa_data_que_Operating System` == "Android 7.0" |
+                             `metaa_data_que_Operating System` == "Android 8.0.0" |
+                             `metaa_data_que_Operating System` == "Android 9" |
+                             `metaa_data_que_Operating System` == "Android 9" |
+                             `metaa_data_que_Operating System` == "iPhone" |
+                             `metaa_data_que_Operating System` == "iPad",
+                           true = 0,
+                           false = 1)) %>% 
+  
+  # overall inclusion criteria
+  mutate(inc = if_else(condition = 
+                         inc.att == 0 |
+                         inc.fol == 0 |
+                         inc.mat == 0 | 
+                         inc.dev == 0,
+                       true = 0,
+                       false = 1))
+
+# look for oddities in exclusion criteria
+## Note: it's particularly low in GRB_01 and IND_01
+mean(DF$inc, 
+     na.rm = TRUE)
+
+DF %>% 
+  filter(!is.na(lab)) %>% 
+  group_by(lab) %>% 
+  summarise(inc.att = mean(inc.att,
+                           na.rm = TRUE),
+            inc.fol = mean(inc.fol,
+                           na.rm = TRUE),
+            inc.mat = mean(inc.mat,
+                           na.rm = TRUE),
+            inc.dev = mean(inc.dev,
+                           na.rm = TRUE),
+            inc = mean(inc,
+                       na.rm = TRUE))
+  
+# delete vestigial columns
+DF <- DF %>% 
+  select(-c(neutr_diff_att, happy_diff_att,
+            `metaa_data_que_Operating System`))
+```
+
+
+## Create wide- and long-format dataframes
+The code creates these two separate formats because some functions are easier to run on wide vs. long formats.
+
+### Wide-format
+```{r}
+DF.w <- DF  # data already in wide format
+```
+
+#### Calculate scales
+```{r}
+DF.w <- DF.w %>%
+  rowwise() %>%
+  # happiness scale
+  mutate(# neutral trial
+         neutr.happiness = mean(c(neutr_emot_enj, 
+                                  neutr_emot_hap, 
+                                  neutr_emot_lke, 
+                                  neutr_emot_sat)),
+         
+         # happy trial
+         happy.happiness = mean(c(happy_emot_enj, 
+                                  happy_emot_hap, 
+                                  happy_emot_lke, 
+                                  happy_emot_sat)),
+                  
+         # filler 1 trial
+         fil.1.happiness = mean(c(fil.1_emot_enj, 
+                                  fil.1_emot_hap, 
+                                  fil.1_emot_lke, 
+                                  fil.1_emot_sat)),
+         
+         # filler 4 trial emotion ratings
+         fil.4.happiness = mean(c(fil.4_emot_enj, 
+                                  fil.4_emot_hap, 
+                                  fil.4_emot_lke, 
+                                  fil.4_emot_sat))
+         ) %>% 
+  
+  # anxiety scale
+  mutate(# neutral trial
+         neutr.anxiety = mean(c(neutr_emot_nrv, 
+                                neutr_emot_wor)),
+         
+         # happy trial
+         happy.anxiety = mean(c(happy_emot_nrv, 
+                                happy_emot_wor)),
+                  
+         # filler 1 trial
+         fil.1.anxiety = mean(c(fil.1_emot_nrv, 
+                                fil.1_emot_wor)),
+         
+         # filler 4 trial emotion ratings
+         fil.4.anxiety = mean(c(fil.4_emot_nrv, 
+                                fil.4_emot_wor))
+         ) %>% 
+  
+  # anger measure
+  rename(neutr.anger = neutr_emot_ang,
+         happy.anger = happy_emot_ang,
+         fil.1.anger = fil.1_emot_ang,
+         fil.4.anger = fil.4_emot_ang) %>% 
+  
+  # liking measure
+  rename(neutr.liking = neutr_like_tsk,
+         happy.liking = happy_like_tsk,
+         fil.1.liking = fil.1_like_tsk,
+         fil.4.liking = fil.4_like_tsk) %>% 
+  
+  # body awareness
+  ## reverse score item 10
+  mutate(indiv_body_010 = (8 - indiv_body_010)) %>% 
+  
+  ## average all items
+  mutate(indiv_body = mean(c(indiv_body_001, indiv_body_002,
+                             indiv_body_003, indiv_body_004,
+                             indiv_body_005, indiv_body_006,
+                             indiv_body_007, indiv_body_008,
+                             indiv_body_009, indiv_body_010,
+                             indiv_body_011, indiv_body_012,
+                             indiv_body_013, indiv_body_014,
+                             indiv_body_015, indiv_body_016,
+                             indiv_body_017, indiv_body_018))
+         ) %>% 
+  ungroup()
+```
+
+#### Sort columns and rows to improve readability
+```{r}
+DF.w <- DF.w %>%
+  # Sort columns
+  select(
+    # subject id and condition identifiers 
+    ResponseId, lab, UserLanguage, mode, condition, image,
+    
+    # happiness reports
+    happy.happiness, neutr.happiness, 
+    fil.1.happiness, fil.4.happiness, 
+    
+    # anxiety reports
+    happy.anxiety, neutr.anxiety, 
+    fil.1.anxiety, fil.4.anxiety,
+    
+    # anger reports
+    happy.anger, neutr.anger, 
+    fil.1.anger, fil.4.anger,
+    
+    # liking ratings
+    happy.liking, neutr.liking,
+    fil.1.liking, fil.4.liking,
+    
+    # inclusion criteria
+    inc.att : inc,
+    
+    # quality items
+    qulty_rate_var, qulty_feel_var, qulty_smlr_var, 
+    
+    # individual differences
+    indiv_gend_var, indiv_agee_var, indiv_body,
+    ) %>%
+  
+  # Sort by subject id
+  arrange(lab, ResponseId)
+```
+
+### Long format
+```{r}
+DF.l <- DF %>%
+  pivot_longer(cols = c(neutr_emot_ang : neutr_like_tsk, # neutral trial responses
+                        happy_emot_ang : happy_like_tsk, # happy trial responses
+                        fil.1_emot_ang : fil.1_like_tsk, # filler 1 responses
+                        fil.4_emot_ang : fil.4_like_tsk), # filler 4 responses
+               names_to = "dv",
+               values_to = "value") %>% 
+  
+  separate(col = "dv", into = c("trial", "outcome"),
+           sep = "_...._") %>% 
+  
+  pivot_wider(names_from = "outcome",
+              values_from = "value") %>% 
+  
+  arrange(ResponseId, trial)
+```
+
+#### Calculate scales
+```{r}
+DF.l <- DF.l %>% 
+  rowwise() %>% 
+  # happiness items
+  mutate(happiness = mean(c(enj, hap, 
+                            lke, sat))) %>% 
+  
+  # anxiety items
+  mutate(anxiety = mean(c(nrv, wor))) %>% 
+  
+  # anger itmes
+  rename(anger = ang) %>% 
+         
+  # body awareness
+  ## reverse score item 10
+  mutate(indiv_body_010 = (8 - indiv_body_010)) %>% 
+  
+  ## average all items
+  mutate(indiv_body = mean(c(indiv_body_001, indiv_body_002,
+                             indiv_body_003, indiv_body_004,
+                             indiv_body_005, indiv_body_006,
+                             indiv_body_007, indiv_body_008,
+                             indiv_body_009, indiv_body_010,
+                             indiv_body_011, indiv_body_012,
+                             indiv_body_013, indiv_body_014,
+                             indiv_body_015, indiv_body_016,
+                             indiv_body_017, indiv_body_018))
+         ) %>% 
+  ungroup()
+```
+
+#### Sort columns and rows to improve readability
+```{r}
+DF.l <- DF.l %>%
+  # Sort columns
+  select( 
+    # subject id and condition identifiers 
+    ResponseId, lab, UserLanguage, mode, condition, image,
+    
+    trial, 
+    happiness, enj, hap, lke, sat, # happiness ratings
+    anxiety, nrv, wor, # anxiety ratings
+    anger, # anger ratings
+    lke, # liking ratings
+    
+    
+    inc.att : inc, # inclusion criteria
+    
+    qulty_rate_var, qulty_feel_var, qulty_smlr_var, # quality items
+    
+    indiv_gend_var, indiv_agee_var, indiv_body, inc # demographics
+    )
+```
+
+Delete original dataframe
+```{r}
+rm(DF)
+```
+
+### Limit long format to only the critical trials
+```{r}
+DF.l.full <- DF.l
+
+DF.l <- DF.l %>%
+  filter(trial == "happy" |
+         trial == "neutr")
+```
+
+## Convert subject id, condition, study, and trial to factors
+```{r}
+DF.l$ResponseId <- as.factor(DF.l$ResponseId)
+DF.l$lab <- as.factor(DF.l$lab)
+DF.l$condition <- as.factor(DF.l$condition) 
+DF.l$image <- as.factor(DF.l$image)
+DF.l$trial <- as.factor(DF.l$trial)
+
+DF.l.full$ResponseId <- as.factor(DF.l.full$ResponseId)
+DF.l.full$lab <- as.factor(DF.l.full$lab)
+DF.l.full$condition <- as.factor(DF.l.full$condition) 
+DF.l.full$image <- as.factor(DF.l.full$image)
+DF.l.full$trial <- as.factor(DF.l.full$trial)
+
+DF.w$condition <- as.factor(DF.w$condition) 
+DF.w$image <- as.factor(DF.w$image)
+DF.w$lab <- as.factor(DF.w$lab)
+```
+
+```{r}
+write_rds(DF.l, "DF.l.rds")
+write_rds(DF.l.full, "DF.l.full.rds")
+write_rds(DF.w, "DF.w.rds")
+
+write_csv(DF.l, "DF.l.csv")
+write_csv(DF.l.full, "DF.l.full.csv")
+write_csv(DF.w, "DF.w.csv")
+```
+
+```{r}
+
+```
+
