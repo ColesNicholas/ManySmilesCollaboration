@@ -1,6 +1,3 @@
-# ManySmilesCollaboration
-Private GitHub page for data/code related to the Many Smiles Collaboration. Currently only accessible to Nicholas Coles, Marco Tullio Liuzza, and Marco Marozzi.
-
 # Description of files
 ## ManySmilesDataProcessing.Rmd:
 - Directly pulls the data from the Qualtrics server
