@@ -132,8 +132,9 @@ DF <- DF %>%
          ResponseId != 'R_22ulZEcvoGxSUAk')
 ```
 
-
 ## Prep data review and coding sheets
+Note: this code is set to eval = FALSE because it is only used when Nicholas needs to prep a data review or coding sheet
+
 Identify lab
 ```{r eval = FALSE}
 # site <- "USA_02"
@@ -149,7 +150,7 @@ Identify lab
 # site <- 'CHE_01'
 # site <- 'KEN_01'
 # site <- 'POL_02'
-site <- 'COL_03'
+# site <- 'COL_03'
 ```
 
 Create review sheet
@@ -338,20 +339,6 @@ for (c in countries){
 
 # delete vestigial
 rm(coder1, coder2, coder, c, countries)
-```
-
-```{r eval = FALSE}
-DF %>% 
-  filter(lab == "USA_02" |
-         lab == "NOR_01" |
-         lab == "ESP_01") %>% 
-  group_by(lab) %>% 
-  summarise(Awareness.M = mean(Awareness),
-            Awareness.min = min(Awareness),
-            Awareness.max = max(Awareness),
-            Distraction.M = mean(Distraction),
-            Distraction.min = min(Distraction),
-            Distraction.max = max(Distraction))
 ```
 
 ## Clean data
@@ -714,13 +701,4 @@ DF.w$lab <- as.factor(DF.w$lab)
 write_rds(DF.l, "DF.l.rds")
 write_rds(DF.l.full, "DF.l.full.rds")
 write_rds(DF.w, "DF.w.rds")
-
-write_csv(DF.l, "DF.l.csv")
-write_csv(DF.l.full, "DF.l.full.csv")
-write_csv(DF.w, "DF.w.csv")
 ```
-
-```{r}
-
-```
-
