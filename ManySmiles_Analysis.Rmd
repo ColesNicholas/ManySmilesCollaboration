@@ -1,0 +1,241 @@
+---
+title: 'Many Smiles Collaboration Data Analysis'
+editor_options:
+  chunk_output_type: console
+---
+## Setup R environment
+```{r message = FALSE, results = "hide"}
+# clear environment
+rm(list = ls())
+
+# install (if necessary) and load packages
+  # function written by stevenworthington 
+  Ipak <- function(pkg){
+      new.pkg <- pkg[!(pkg %in% installed.packages()[, 'Package'])]
+      
+      if (length(new.pkg)) 
+          install.packages(new.pkg, dependencies = TRUE)
+      
+      sapply(pkg, require, character.only = TRUE)
+  }
+
+  # vector of necessary packages
+  packages <- c('tidyverse', 'ggplot2', 'lme4',
+                'lmerTest', 'emmeans')
+  
+  # using vector of packages, call ipak function
+  Ipak(packages)
+  
+  # delete vestigial
+  rm(packages, Ipak)
+
+# turn scientific notation off
+options(scipen = 999)
+
+# allow for Type III SS
+options(contrasts = c('contr.sum', 'contr.poly'))
+```
+
+## Open data
+```{r}
+DF.l <- readRDS("DF.l.rds")
+DF.l.full <- readRDS("DF.l.full.rds")
+DF.w <- readRDS("DF.w.rds")
+```
+
+## Explore dataset
+### Emotion responses
+#### Individual items
+##### Correlations
+Since participants provide reports for the emotion items twice (in the neutral and happy trials), we will examine their reliability seperately for each trial
+```{r}
+for (trial in unique(DF.l$trial)){
+  print(paste0("trial = ", trial))
+  
+  DF.l %>% 
+    filter(trial == trial) %>% 
+    select(enj, hap, lke, sat) %>%
+    cor() %>% 
+    print()
+}
+
+rm(trial)
+```
+
+##### Histograms
+Create histogram for each emotion item
+```{r}
+emo.hist <- list()
+
+for (emo in c("enj", "hap", "lke", "sat")){
+  emo.hist[[emo]] <- 
+    ggplot(DF.l, 
+           aes_string(x = emo,
+                      fill = "trial")) +
+    geom_histogram(binwidth = 1, 
+                   alpha= .5, 
+                   position= "identity") +
+    ylim(0, 120) +
+    theme(panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank())
+}
+
+# grid.arrange
+library('gridExtra')
+grid.arrange(emo.hist$enj, emo.hist$hap,
+             emo.hist$lke, emo.hist$sat,
+             top = "Emotion reports after happy and neutral poses")
+
+# delete vestigial
+rm(emo, emo.hist)
+```
+
+### Happiness emotion scale
+#### Density plot
+```{r}
+ggplot(DF.l, aes(x = happiness, fill = trial)) +
+  geom_density(alpha = .3) +
+  labs(title = "Happiness reports after happy and neutral poses")
+```
+
+### Participant descriptives
+```{r}
+# condition n
+table(DF.w$condition)
+
+table(DF.w$condition, DF.w$image)
+
+# gender
+table(DF.w$indiv_gend_var) %>% prop.table()
+
+# age
+DF.w %>% 
+  summarise(m = mean(indiv_agee_var),
+            sd = sd(indiv_agee_var))
+
+# lab
+table(DF.w$lab)
+```
+
+### Task difficulty
+```{r}
+ggplot(DF.l, aes(x = dq1, fill = condition)) +
+  geom_histogram(binwidth = 1, 
+                 alpha = .5, 
+                 position="identity") +
+  labs(title = "Ratings of task difficulty",
+       x = "task difficulty ratings")
+
+dif.m <- lmer(dq1 ~ trial * condition + (1 | subid),
+              data = DF.l)
+
+anova(dif.m)
+lsmeansLT(dif.m, which =  "condition", pairwise = TRUE)
+
+rm(dif.m)
+```
+
+### Task liking
+```{r}
+ggplot(DF.l, aes(x = tsk, fill = trial)) +
+  geom_histogram(binwidth = 1, 
+                 alpha = .5, 
+                 position="identity") +
+  labs(title = "Ratings of task difficulty",
+       x = "task difficulty ratings") +
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank())
+
+tsk.m <- lmer(tsk ~ trial * condition + (1 | subid),
+              data = DF.l)
+
+anova(tsk.m)
+```
+
+## Confirmatory analyses
+Remove participants who do not meet inclusion criteria
+```{r}
+DF.l <- DF.l %>% 
+  filter(inc == 1)
+```
+
+
+```{r}
+c.lmer <- lmer(happiness ~ trial * condition * image + 
+                 (1 | ResponseId) + (1 | lab),
+               data = DF.l)
+summary(c.lmer)
+anova(c.lmer)
+
+joint_tests(c.lmer, by = "condition")
+
+emmeans(c.lmer, pairwise ~ trial | condition,
+        adjust = "none")
+
+
+lmer(tsk ~ trial * image * condition + (1 | subid),
+     data = DF.long) %>% 
+  emmeans("condition") %>% 
+  contrast(method = "pairwise")
+
+rm(c.lmer)
+```
+
+### Awareness moderation and sensitivity analyses
+```{r}
+aware.lmer <-
+  lmer(happiness ~ trial * condition * image + aware_rate + 
+(trial * aware_rate) + (1 | subid),
+       data = DF.long)
+
+anova(aware.lmer)
+
+joint_tests(aware.lmer, by = "condition")
+
+joint_tests(aware.lmer, by = c("aware_rate"))
+
+rm(aware.lmer)
+```
+
+### Compare happy to filler trials
+```{r}
+DF.long.fil <- DF.long.full %>% 
+  filter(trial != "neutr") %>% 
+  mutate(
+    trial.fvh = ifelse(test = trial == "happy",
+                       yes = "happy",
+                       no = "filler")
+    )
+
+DF.long.fil$trial.fvh <- 
+  as.factor(DF.long.fil$trial.fvh)
+
+fil.lmer <-
+  lmer(happiness ~ trial.fvh * condition * image + (1 | subid),
+       data = DF.long.fil)
+
+anova(fil.lmer)
+
+joint_tests(fil.lmer, by = "condition")
+
+joint_tests(fil.lmer, by = "image")
+
+DF.long.fil %>% 
+  group_by(trial.fvh) %>% 
+  summarise(m = mean(happiness),
+            sd = sd(happiness))  
+```
+
+## Exploratory analyses
+### Anxiety
+```{r}
+#####
+anx.lmer <- lmer(nrv ~ trial * image * condition + 
+                   (1 | subid),
+            data = DF.long)
+anova(anx.lmer)
+
+emmeans(anx.lmer, "condition") %>% 
+  contrast(method = "pairwise")
+```
+
