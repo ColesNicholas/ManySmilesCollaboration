@@ -21,7 +21,8 @@ rm(list = ls())
 
   # vector of necessary packages
   packages <- c('tidyverse', 'qualtRics', 
-                'googlesheets4', 'readxl')
+                'googlesheets4', 'readxl',
+                'psych')
   
   # using vector of packages, call ipak function
   Ipak(packages)
@@ -132,25 +133,76 @@ DF <- DF %>%
          ResponseId != 'R_22ulZEcvoGxSUAk')
 ```
 
+Issue Report 5/3/2021 13:42:19
+```{r}
+DF <- DF %>% 
+  filter(ResponseId != "R_1eK3FNOOZQZHov4",
+         ResponseId != "R_1giES2oovR2sJGo",
+         ResponseId != "R_1gvdVKTh2Q7IYvw",
+         ResponseId != "R_1OGBoYWh7Wy6t90",
+         ResponseId != "R_1OHttohbOonQR3f",
+         ResponseId != "R_1rGsxNubojx9p5s",
+         ResponseId != "R_2ab26zkYpicljIL",
+         ResponseId != "R_2ariEOYgWmeUb3D",
+         ResponseId != "R_2CJ3p00nKpIVD6p",
+         ResponseId != "R_2CJ3p00nKpIVD6p",
+         ResponseId != "R_2cnjhdhKXJO2EjU",
+         ResponseId != "R_2RZVdR1OUjWVKZM",
+         ResponseId != "R_2SxiNXD4kHPVdCK",
+         ResponseId != "R_2uwvT1YvWYxaCaN",
+         ResponseId != "R_2vc6Snh5gCe7RYs",
+         ResponseId != "R_2VQnnlaCBBz2ZOB",
+         ResponseId != "R_30wPj1MIb5h4Yx7",
+         ResponseId != "R_3DvATATzYPMh0MA",
+         ResponseId != "R_3inei4TekzBMBgC",
+         ResponseId != "R_3lAELDkUxJar9qx",
+         ResponseId != "R_3p9D1AsSzStrMbz",
+         ResponseId != "R_3szfC3fIUH6SDmw",
+         ResponseId != "R_6fbnBLbFxHrdaYp",
+         ResponseId != "R_74cC2EOdWmFJPdn",
+         ResponseId != "R_cUtMWAOJRPYKIBr",
+         ResponseId != "R_d0Yqdl0vmv56Y5b",
+         ResponseId != "R_QnxxXHNugmQ4UtH",
+         ResponseId != "R_RVKns4AP1CXaknL",
+         ResponseId != "R_Un0uPQitlSLvnFL",
+         ResponseId != "R_vCs5PjQe7Zw2xsl",
+         ResponseId != "R_W3eg3lgdvdl5n5n",
+         ResponseId != "R_w6562GdZqsX7WPT",
+         ResponseId != "R_xhAWlsmsZ5tj6qR",
+         ResponseId != "R_yqoCD9H8bUBnJCN",
+         ResponseId != "R_Z42JMemfxctMx1v",
+         ResponseId != "R_zTMyGcAsKIAHvBn")
+```  
+
+Issue Report 5/3/2021 15:45:45
+```{r}
+DF <- DF %>% 
+  filter(ResponseId != "R_2fHgqY784oIsl23",
+         ResponseId != "R_2anPJwvrQ1xvaQw",
+         ResponseId != "R_1rCuopgnEYbhZbe",
+         ResponseId != "R_1Cg0Ut7JsIUCTLt",
+         ResponseId != "R_1gu4j0wbEEu5NpB",
+         ResponseId != "R_2Vm8k8lidsF4kK7")
+```
+
+Issue Report 5/4/2021 7:15:04
+```{r}
+DF <- DF %>% 
+  filter(ResponseId != "R_yyJM8Jbrnu9UcwN")
+```
+
+Issue Report 5/4/2021 7:35:25
+```{r}
+DF <- DF %>% 
+  filter(ResponseId != "R_1JJH6cMwmsFEs4N")
+```
+
 ## Prep data review and coding sheets
 Note: this code is set to eval = FALSE because it is only used when Nicholas needs to prep a data review or coding sheet
 
 Identify lab
 ```{r eval = FALSE}
 # site <- "USA_02"
-# site <- "ISR_01"
-# site <- 'USA_03'
-# site <- 'DEU_01'
-# site <- 'TUR_01'
-# site <- 'POL_01'
-# site <- 'JPN_01'
-# site <- 'HUN_01'
-# site <- 'FRA_01'
-# site <- 'ESP_01'
-# site <- 'CHE_01'
-# site <- 'KEN_01'
-# site <- 'POL_02'
-# site <- 'COL_03'
 ```
 
 Create review sheet
@@ -207,7 +259,7 @@ gs4_create(paste0(site, "_coder1"),
            sheets = coding)
 ```
 
-## Open and merge open-ended data
+## Open and merge open-ended coding data with Qualtrics data
 ```{r}
 # create blank dataframe for coding data
 coding.DF <- data.frame(Awareness1 = numeric(),
@@ -215,8 +267,9 @@ coding.DF <- data.frame(Awareness1 = numeric(),
                         Awareness2 = numeric(),
                         Distraction2 = numeric())
 
-# create list of countries
-countries <- c("USA_02", "NOR_01", "ESP_01")
+# create list of countries w/ completed open-ended data
+countries <- c("USA_02", "NOR_01", "ESP_01", 
+               "FRA_01", "JPN_01", "HUN_01")
 
 # append coding data to coding.DF
 for (c in countries){
@@ -277,72 +330,8 @@ DF <- full_join(x = DF, y = coding.DF,
 rm(coder, coder1, coder2, coding.DF, c, countries)
 ```
 
-```{r eval = F}
-# add coding columns to main dataframe
-DF <- DF %>% 
-  mutate(Awareness1 = NA,
-         Distraction1 = NA,
-         Awareness2 = NA,
-         Distraction2 = NA)
-
-# create list of countries
-countries <- c("USA_02", "NOR_01", "ESP_01")
-
-for (c in countries){
-  # coder 1
-  ## open coding file
-  coder1 <- 
-    read_excel(path = 
-                 paste0("coding/",
-                        c,
-                        "_coder1.xlsx"),
-               col_types = 
-                 c("text", 
-                   "skip", "skip", "skip",
-                   "numeric",
-                   "skip",
-                   "numeric"),
-               na = c("N/A", "NA")) %>% 
-  
-  ## append coder number to columns
-  rename_at(.vars = vars(Awareness, Distraction), 
-            function(x) paste0(x,
-                               1))
-  
-  # coder 2
-  ## open coding file
-  coder2 <- 
-    read_excel(path = 
-                 paste0("coding/",
-                        c,
-                        "_coder2.xlsx"),
-               col_types = 
-                 c("text", 
-                   "skip", "skip", "skip",
-                   "numeric",
-                   "skip",
-                   "numeric"),
-               na = c("N/A", "NA")) %>% 
-  
-  ## append coder number to columns
-  rename_at(.vars = vars(Awareness, Distraction), 
-            function(x) paste0(x,
-                               2))
-  
-  # merge two coders' data
-  coder <- full_join(x = coder1, y = coder2,
-                     by = 'ResponseId')
-  
-  # merge coding data with main dataframe
-  DF <- full_join(x = DF, y = coder)
-}
-
-# delete vestigial
-rm(coder1, coder2, coder, c, countries)
-```
-
 ## Clean data
-Remove test data, add subject ids, and select relevant variables
+Remove test data and select relevant variables
 ```{r}
 DF <- DF %>% 
   # remove test data
@@ -389,7 +378,31 @@ DF <- DF %>%
     
     qulty_rate_var, qulty_feel_var, 
     descr_smlr_tx1, qulty_smlr_var,
+    Awareness1 : Distraction2
     )
+```
+
+Calculate awareness and distraction scores 
+```{r}
+DF <- DF %>% 
+  rowwise() %>% 
+  mutate(awareness = mean(c(Awareness1,
+                            Awareness2)),
+         distraction = mean(c(Distraction1,
+                              Distraction2)))
+
+# examine IRR of awareness and distraction scores
+DF %>% 
+  select(Awareness1, Awareness2) %>% 
+  alpha()
+
+DF %>% 
+  select(Distraction1, Distraction2) %>% 
+  alpha()
+
+# delete vestigial 
+DF <- DF %>% 
+  select(-c(Awareness1 : Distraction2))
 ```
 
 Code for whether participants meet inclusion criteria
@@ -402,7 +415,7 @@ Code for whether participants meet inclusion criteria
 
 ```{r}
 DF <- DF %>% 
-  # individual inclusion criterion
+  # specific inclusion criterion
   mutate(
          # attention check items
          inc.att = if_else(condition = neutr_diff_att == 7 &
@@ -416,7 +429,9 @@ DF <- DF %>%
                            false = 0),
          
          # participant ratings of degree to which posed expressions matched image of actor
-         inc.mat = if_else(condition = qulty_smlr_var > 1,
+         inc.mat = if_else(condition = 
+                             is.na(qulty_smlr_var) | 
+                             qulty_smlr_var > 1,
                            true = 1,
                            false = 0),
          
@@ -436,7 +451,9 @@ DF <- DF %>%
                          inc.att == 0 |
                          inc.fol == 0 |
                          inc.mat == 0 | 
-                         inc.dev == 0,
+                         inc.dev == 0 |
+                         awareness > 1 |
+                         distraction > 5,
                        true = 0,
                        false = 1))
 
@@ -465,6 +482,15 @@ DF <- DF %>%
             `metaa_data_que_Operating System`))
 ```
 
+Center continuous variables that will be used in later moderation analyses
+Note: check that this is working correctly
+```{r}
+DF$qulty_rate_var <- scale(DF$qulty_rate_var,
+                           scale = F)
+
+DF$awareness <- scale(DF$awareness,
+                      scale = F)
+```
 
 ## Create wide- and long-format dataframes
 The code creates these two separate formats because some functions are easier to run on wide vs. long formats.
@@ -577,7 +603,7 @@ DF.w <- DF.w %>%
     fil.1.liking, fil.4.liking,
     
     # inclusion criteria
-    inc.att : inc,
+    awaremess, inc.att : inc,
     
     # quality items
     qulty_rate_var, qulty_feel_var, qulty_smlr_var, 
@@ -656,7 +682,7 @@ DF.l <- DF.l %>%
     lke, # liking ratings
     
     
-    inc.att : inc, # inclusion criteria
+    awareness, inc.att : inc, # inclusion criteria
     
     qulty_rate_var, qulty_feel_var, qulty_smlr_var, # quality items
     
@@ -698,7 +724,12 @@ DF.w$lab <- as.factor(DF.w$lab)
 ```
 
 ```{r}
-write_rds(DF.l, "DF.l.rds")
-write_rds(DF.l.full, "DF.l.full.rds")
-write_rds(DF.w, "DF.w.rds")
+write_rds(DF.l, "data/DF.l.rds")
+write_rds(DF.l.full, "data/DF.l.full.rds")
+write_rds(DF.w, "data/DF.w.rds")
 ```
+
+```{r}
+
+```
+

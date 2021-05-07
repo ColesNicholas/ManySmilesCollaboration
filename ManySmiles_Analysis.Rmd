@@ -43,62 +43,7 @@ DF.l.full <- readRDS("DF.l.full.rds")
 DF.w <- readRDS("DF.w.rds")
 ```
 
-## Explore dataset
-### Emotion responses
-#### Individual items
-##### Correlations
-Since participants provide reports for the emotion items twice (in the neutral and happy trials), we will examine their reliability seperately for each trial
-```{r}
-for (trial in unique(DF.l$trial)){
-  print(paste0("trial = ", trial))
-  
-  DF.l %>% 
-    filter(trial == trial) %>% 
-    select(enj, hap, lke, sat) %>%
-    cor() %>% 
-    print()
-}
-
-rm(trial)
-```
-
-##### Histograms
-Create histogram for each emotion item
-```{r}
-emo.hist <- list()
-
-for (emo in c("enj", "hap", "lke", "sat")){
-  emo.hist[[emo]] <- 
-    ggplot(DF.l, 
-           aes_string(x = emo,
-                      fill = "trial")) +
-    geom_histogram(binwidth = 1, 
-                   alpha= .5, 
-                   position= "identity") +
-    ylim(0, 120) +
-    theme(panel.grid.major = element_blank(), 
-          panel.grid.minor = element_blank())
-}
-
-# grid.arrange
-library('gridExtra')
-grid.arrange(emo.hist$enj, emo.hist$hap,
-             emo.hist$lke, emo.hist$sat,
-             top = "Emotion reports after happy and neutral poses")
-
-# delete vestigial
-rm(emo, emo.hist)
-```
-
-### Happiness emotion scale
-#### Density plot
-```{r}
-ggplot(DF.l, aes(x = happiness, fill = trial)) +
-  geom_density(alpha = .3) +
-  labs(title = "Happiness reports after happy and neutral poses")
-```
-
-### Participant descriptives
+## Participant descriptives
 ```{r}
 # condition n
 table(DF.w$condition)
@@ -110,108 +55,115 @@ table(DF.w$indiv_gend_var) %>% prop.table()
 
 # age
 DF.w %>% 
-  summarise(m = mean(indiv_agee_var),
-            sd = sd(indiv_agee_var))
+  summarise(m = mean(indiv_agee_var,
+                     na.rm = T),
+            sd = sd(indiv_agee_var,
+                    na.rm = T))
 
 # lab
 table(DF.w$lab)
 ```
 
-### Task difficulty
-```{r}
-ggplot(DF.l, aes(x = dq1, fill = condition)) +
-  geom_histogram(binwidth = 1, 
-                 alpha = .5, 
-                 position="identity") +
-  labs(title = "Ratings of task difficulty",
-       x = "task difficulty ratings")
-
-dif.m <- lmer(dq1 ~ trial * condition + (1 | subid),
-              data = DF.l)
-
-anova(dif.m)
-lsmeansLT(dif.m, which =  "condition", pairwise = TRUE)
-
-rm(dif.m)
-```
-
-### Task liking
-```{r}
-ggplot(DF.l, aes(x = tsk, fill = trial)) +
-  geom_histogram(binwidth = 1, 
-                 alpha = .5, 
-                 position="identity") +
-  labs(title = "Ratings of task difficulty",
-       x = "task difficulty ratings") +
-  theme(panel.grid.major = element_blank(), 
-        panel.grid.minor = element_blank())
-
-tsk.m <- lmer(tsk ~ trial * condition + (1 | subid),
-              data = DF.l)
-
-anova(tsk.m)
-```
-
-## Confirmatory analyses
+## Analyses
 Remove participants who do not meet inclusion criteria
+Note: this currently means that you lose almost all data because most labs have not yet completed coding of key inclusion criteria variables
 ```{r}
 DF.l <- DF.l %>% 
   filter(inc == 1)
 ```
 
+### Primary analysis
+Note: random slopes do not converge well (and takes a *very* long time). 
+Worth considering whether they should be included in the model?
+```{r eval = FALSE}
+m <- lmer(happiness ~ 
+            trial * condition * image + 
+            (1 | lab) +
+            (1 | ResponseId) + 
+            (0 + condition | lab) +
+            (0 + image | lab) +
+            (0 + trial : image | lab) +
+            (0 + trial : condition | lab) +
+            (0 + condition : image | lab) +
+            (0 + trial : condition: image | lab),
+          data = DF.l)
 
+write_rds(m, "model.rds")
+```
+
+Inspect model
 ```{r}
-c.lmer <- lmer(happiness ~ trial * condition * image + 
-                 (1 | ResponseId) + (1 | lab),
-               data = DF.l)
-summary(c.lmer)
-anova(c.lmer)
+m <- read_rds("model.rds")
 
-joint_tests(c.lmer, by = "condition")
+summary(m)
+anova(m)
 
-emmeans(c.lmer, pairwise ~ trial | condition,
+joint_tests(m, by = "condition")
+
+emmeans(c.lmer, pairwise ~ trial | image | condition,
         adjust = "none")
 
-
-lmer(tsk ~ trial * image * condition + (1 | subid),
-     data = DF.long) %>% 
-  emmeans("condition") %>% 
-  contrast(method = "pairwise")
-
-rm(c.lmer)
+rm(m)
 ```
 
-### Awareness moderation and sensitivity analyses
+### Secondary analyses
+#### Pose quality moderation
 ```{r}
-aware.lmer <-
-  lmer(happiness ~ trial * condition * image + aware_rate + 
-(trial * aware_rate) + (1 | subid),
+m <- lmer(happiness ~ 
+            trial + qulty_rate_var + trial : qulty_rate_var +
+            condition + image +
+            (1 | lab) + 
+            (1 | ResponseId) + 
+            (0 + trial | lab) + 
+            (0 + image | lab) + 
+            (0 + condition | lab) +  
+            (0 + trial : qulty_rate_var | lab),
+          data = DF.l)
+```
+
+### Does awareness vary across conditions? 
+```{r}
+m <- lmer(awareness ~ 
+            condition + image +
+            (1 | lab) +
+            (0 + condition | lab) +  
+            (0 + image | lab),
+          data = DF.l
+          )
+```
+
+### Does awareness moderate facial feedback effects?
+```{r}
+m <- lmer(happiness ~ 
+            trial + awareness + trial : awareness + condition + image +
+            (1 | lab) +
+            (1 | ResponseId) +
+            (0 + trial | lab) + 
+            (0 + image | lab) + 
+            (0 + condition | lab) +  
+            (0 + trial : awareness | lab),
        data = DF.long)
-
-anova(aware.lmer)
-
-joint_tests(aware.lmer, by = "condition")
-
-joint_tests(aware.lmer, by = c("aware_rate"))
-
-rm(aware.lmer)
 ```
 
-### Compare happy to filler trials
+### Do Participants Report Experiencing More Happiness During the Smiling vs. Filler Trials?
 ```{r}
-DF.long.fil <- DF.long.full %>% 
+DF.l.fil <- DF.l.full %>% 
   filter(trial != "neutr") %>% 
   mutate(
     trial.fvh = ifelse(test = trial == "happy",
                        yes = "happy",
-                       no = "filler")
+                       no = "filler"),
+    trial.fvh = factor(trial.fvh)
     )
 
-DF.long.fil$trial.fvh <- 
-  as.factor(DF.long.fil$trial.fvh)
-
-fil.lmer <-
-  lmer(happiness ~ trial.fvh * condition * image + (1 | subid),
+m <- lmer(happiness ~ 
+            trial.fvh + condition + image + trial.fvh : image +
+            (1 | lab) +
+            (1 | ResponseId)+
+            (0 + trial.fvh | lab) + 
+            (0 + image | lab) + 
+            (0 + condition | lab) +  
+            (0 + trial.fvh : image | lab),
        data = DF.long.fil)
 
 anova(fil.lmer)
