@@ -2,7 +2,7 @@
 ## ManySmilesDataProcessing.Rmd:
 - Directly pulls the data from the Qualtrics server
 - Merges the Qualtrics data with data on participant awareness and distraction (which labs coded)
-- Cleans and processes data to create a "wide", "long" , and "longer" dataframes
+- Cleans and processes data to create a "long"  and "longer" dataframes
 - Exports data to the data folder
 
 ## ManySmilesAnalysis.Rmd:
@@ -12,7 +12,6 @@
 Each lab had two coders code the extent to which participants were (a) aware of the true purpose of the study and (b) distracted. This folder contains seperate .xlsx files for each coder in each lab. (Note: many labs are still coding open-ended responses, so this folder is smaller than usual.)
 
 ## Data folder
-- DF.w.rds: one row for each participant
 - DF.l.rds: one row for each of the happy and neutral trials that participants completed (i.e., two rows per participant). This is the dataframe that is used for most analyses.
 - DF.l.full.rds: one row for each of the happy, neutral, filler 1, and filler 2 trials that participants completed (i.e., four rows per participant). This dataframe is used for one of the exploratory analyses requested by reviewers.
 
