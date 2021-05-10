@@ -197,12 +197,19 @@ DF <- DF %>%
   filter(ResponseId != "R_1JJH6cMwmsFEs4N")
 ```
 
+Issue Report 5/10/2021 9:27:17
+```{r}
+DF <- DF %>% 
+  filter(ResponseId != "R_1Ok4MouIQIvgj8Q",
+         ResponseId != "R_Y4Fp9VO9dCrgaFH")
+```
+
 ## Prep data review and coding sheets
 Note: this code is set to eval = FALSE because it is only used when Nicholas needs to prep a data review or coding sheet
 
 Identify lab
 ```{r eval = FALSE}
-# site <- "USA_02"
+site <- "CHE_01"
 ```
 
 Create review sheet
@@ -233,9 +240,11 @@ review[review$DataClassification == "anonymous", ]$DataClassification <- "real"
   
 gs4_create(paste0(site, "_DataClassification"),
            sheets = review)
+
+rm(review)
 ```
 
-Create coding sheets
+Create coding sheet
 ```{r eval = FALSE}
 coding <- DF %>% 
   # select site-specific non-test data
@@ -257,6 +266,8 @@ coding <- DF %>%
 
 gs4_create(paste0(site, "_coder1"),
            sheets = coding)
+
+rm(coding)
 ```
 
 ## Open and merge open-ended coding data with Qualtrics data
@@ -267,9 +278,10 @@ coding.DF <- data.frame(Awareness1 = numeric(),
                         Awareness2 = numeric(),
                         Distraction2 = numeric())
 
-# create list of countries w/ completed open-ended data
+# create list of countries with completed open-ended data
 countries <- c("USA_02", "NOR_01", "ESP_01", 
-               "FRA_01", "JPN_01", "HUN_01")
+               "FRA_01", "JPN_01", "HUN_01",
+               "ISR_01")
 
 # append coding data to coding.DF
 for (c in countries){
@@ -277,7 +289,7 @@ for (c in countries){
   ## open coding file
   coder1 <- 
     read_excel(path = 
-                 paste0("coding/",
+                 paste0("data/coding/",
                         c,
                         "_coder1.xlsx"),
                col_types = 
@@ -297,7 +309,7 @@ for (c in countries){
   ## open coding file
   coder2 <- 
     read_excel(path = 
-                 paste0("coding/",
+                 paste0("data/coding/",
                         c,
                         "_coder2.xlsx"),
                col_types = 
@@ -410,8 +422,8 @@ Code for whether participants meet inclusion criteria
 - Indicated that they did not follow pose expression
 - Indicated that their expression did not match the image of an actor completing the task correctly
 - Did not complete study on desktop computer or laptop (will want to check that OS's are correct)
-- Awareness of ffh (don't have this yet)
-- Indicated that they were very distracted (don't have this yet)
+- Awareness of hypothesis
+- Indicated that they were very distracted
 
 ```{r}
 DF <- DF %>% 
@@ -457,172 +469,30 @@ DF <- DF %>%
                        true = 0,
                        false = 1))
 
-# look for oddities in exclusion criteria
-## Note: it's particularly low in GRB_01 and IND_01
-mean(DF$inc, 
-     na.rm = TRUE)
-
-DF %>% 
-  filter(!is.na(lab)) %>% 
-  group_by(lab) %>% 
-  summarise(inc.att = mean(inc.att,
-                           na.rm = TRUE),
-            inc.fol = mean(inc.fol,
-                           na.rm = TRUE),
-            inc.mat = mean(inc.mat,
-                           na.rm = TRUE),
-            inc.dev = mean(inc.dev,
-                           na.rm = TRUE),
-            inc = mean(inc,
-                       na.rm = TRUE))
-  
 # delete vestigial columns
 DF <- DF %>% 
   select(-c(neutr_diff_att, happy_diff_att,
             `metaa_data_que_Operating System`))
 ```
 
-Center continuous variables that will be used in later moderation analyses
-Note: check that this is working correctly
+Mean-center continuous variables that will be used in later moderation analyses
 ```{r}
-DF$qulty_rate_var <- scale(DF$qulty_rate_var,
+DF$qulty_rate_var <- scale(x = DF$qulty_rate_var,
+                           center = T,
                            scale = F)
 
-DF$awareness <- scale(DF$awareness,
+DF$awareness <- scale(x = DF$awareness,
+                      center = T,
                       scale = F)
 ```
 
-## Create wide- and long-format dataframes
-The code creates these two separate formats because some functions are easier to run on wide vs. long formats.
-
-### Wide-format
-```{r}
-DF.w <- DF  # data already in wide format
-```
-
-#### Calculate scales
-```{r}
-DF.w <- DF.w %>%
-  rowwise() %>%
-  # happiness scale
-  mutate(# neutral trial
-         neutr.happiness = mean(c(neutr_emot_enj, 
-                                  neutr_emot_hap, 
-                                  neutr_emot_lke, 
-                                  neutr_emot_sat)),
-         
-         # happy trial
-         happy.happiness = mean(c(happy_emot_enj, 
-                                  happy_emot_hap, 
-                                  happy_emot_lke, 
-                                  happy_emot_sat)),
-                  
-         # filler 1 trial
-         fil.1.happiness = mean(c(fil.1_emot_enj, 
-                                  fil.1_emot_hap, 
-                                  fil.1_emot_lke, 
-                                  fil.1_emot_sat)),
-         
-         # filler 4 trial emotion ratings
-         fil.4.happiness = mean(c(fil.4_emot_enj, 
-                                  fil.4_emot_hap, 
-                                  fil.4_emot_lke, 
-                                  fil.4_emot_sat))
-         ) %>% 
-  
-  # anxiety scale
-  mutate(# neutral trial
-         neutr.anxiety = mean(c(neutr_emot_nrv, 
-                                neutr_emot_wor)),
-         
-         # happy trial
-         happy.anxiety = mean(c(happy_emot_nrv, 
-                                happy_emot_wor)),
-                  
-         # filler 1 trial
-         fil.1.anxiety = mean(c(fil.1_emot_nrv, 
-                                fil.1_emot_wor)),
-         
-         # filler 4 trial emotion ratings
-         fil.4.anxiety = mean(c(fil.4_emot_nrv, 
-                                fil.4_emot_wor))
-         ) %>% 
-  
-  # anger measure
-  rename(neutr.anger = neutr_emot_ang,
-         happy.anger = happy_emot_ang,
-         fil.1.anger = fil.1_emot_ang,
-         fil.4.anger = fil.4_emot_ang) %>% 
-  
-  # liking measure
-  rename(neutr.liking = neutr_like_tsk,
-         happy.liking = happy_like_tsk,
-         fil.1.liking = fil.1_like_tsk,
-         fil.4.liking = fil.4_like_tsk) %>% 
-  
-  # body awareness
-  ## reverse score item 10
-  mutate(indiv_body_010 = (8 - indiv_body_010)) %>% 
-  
-  ## average all items
-  mutate(indiv_body = mean(c(indiv_body_001, indiv_body_002,
-                             indiv_body_003, indiv_body_004,
-                             indiv_body_005, indiv_body_006,
-                             indiv_body_007, indiv_body_008,
-                             indiv_body_009, indiv_body_010,
-                             indiv_body_011, indiv_body_012,
-                             indiv_body_013, indiv_body_014,
-                             indiv_body_015, indiv_body_016,
-                             indiv_body_017, indiv_body_018))
-         ) %>% 
-  ungroup()
-```
-
-#### Sort columns and rows to improve readability
-```{r}
-DF.w <- DF.w %>%
-  # Sort columns
-  select(
-    # subject id and condition identifiers 
-    ResponseId, lab, UserLanguage, mode, condition, image,
-    
-    # happiness reports
-    happy.happiness, neutr.happiness, 
-    fil.1.happiness, fil.4.happiness, 
-    
-    # anxiety reports
-    happy.anxiety, neutr.anxiety, 
-    fil.1.anxiety, fil.4.anxiety,
-    
-    # anger reports
-    happy.anger, neutr.anger, 
-    fil.1.anger, fil.4.anger,
-    
-    # liking ratings
-    happy.liking, neutr.liking,
-    fil.1.liking, fil.4.liking,
-    
-    # inclusion criteria
-    awaremess, inc.att : inc,
-    
-    # quality items
-    qulty_rate_var, qulty_feel_var, qulty_smlr_var, 
-    
-    # individual differences
-    indiv_gend_var, indiv_agee_var, indiv_body,
-    ) %>%
-  
-  # Sort by subject id
-  arrange(lab, ResponseId)
-```
-
-### Long format
+## Create long-format dataframe
 ```{r}
 DF.l <- DF %>%
   pivot_longer(cols = c(neutr_emot_ang : neutr_like_tsk, # neutral trial responses
                         happy_emot_ang : happy_like_tsk, # happy trial responses
-                        fil.1_emot_ang : fil.1_like_tsk, # filler 1 responses
-                        fil.4_emot_ang : fil.4_like_tsk), # filler 4 responses
+                        fil.1_emot_ang : fil.1_like_tsk, # filler 1 trial responses
+                        fil.4_emot_ang : fil.4_like_tsk), # filler 4 trial responses
                names_to = "dv",
                values_to = "value") %>% 
   
@@ -650,20 +520,20 @@ DF.l <- DF.l %>%
   rename(anger = ang) %>% 
          
   # body awareness
-  ## reverse score item 10
-  mutate(indiv_body_010 = (8 - indiv_body_010)) %>% 
-  
-  ## average all items
-  mutate(indiv_body = mean(c(indiv_body_001, indiv_body_002,
-                             indiv_body_003, indiv_body_004,
-                             indiv_body_005, indiv_body_006,
-                             indiv_body_007, indiv_body_008,
-                             indiv_body_009, indiv_body_010,
-                             indiv_body_011, indiv_body_012,
-                             indiv_body_013, indiv_body_014,
-                             indiv_body_015, indiv_body_016,
-                             indiv_body_017, indiv_body_018))
-         ) %>% 
+    ## reverse score item 10
+    mutate(indiv_body_010 = (8 - indiv_body_010)) %>% 
+    
+    ## average all items
+    mutate(indiv_body = mean(c(indiv_body_001, indiv_body_002,
+                               indiv_body_003, indiv_body_004,
+                               indiv_body_005, indiv_body_006,
+                               indiv_body_007, indiv_body_008,
+                               indiv_body_009, indiv_body_010,
+                               indiv_body_011, indiv_body_012,
+                               indiv_body_013, indiv_body_014,
+                               indiv_body_015, indiv_body_016,
+                               indiv_body_017, indiv_body_018))
+          ) %>% 
   ungroup()
 ```
 
@@ -673,20 +543,23 @@ DF.l <- DF.l %>%
   # Sort columns
   select( 
     # subject id and condition identifiers 
-    ResponseId, lab, UserLanguage, mode, condition, image,
+    ResponseId, lab, 
+    mode, condition, image, trial,
     
-    trial, 
+    # emotion ratings
     happiness, enj, hap, lke, sat, # happiness ratings
     anxiety, nrv, wor, # anxiety ratings
     anger, # anger ratings
     lke, # liking ratings
     
+    # inclusion criteria
+    awareness, distraction, inc.att : inc,
     
-    awareness, inc.att : inc, # inclusion criteria
+    # quality items
+    qulty_rate_var, qulty_feel_var, qulty_smlr_var,
     
-    qulty_rate_var, qulty_feel_var, qulty_smlr_var, # quality items
-    
-    indiv_gend_var, indiv_agee_var, indiv_body, inc # demographics
+    # demographics
+    indiv_gend_var, indiv_agee_var, indiv_body, inc
     )
 ```
 
@@ -717,19 +590,13 @@ DF.l.full$lab <- as.factor(DF.l.full$lab)
 DF.l.full$condition <- as.factor(DF.l.full$condition) 
 DF.l.full$image <- as.factor(DF.l.full$image)
 DF.l.full$trial <- as.factor(DF.l.full$trial)
-
-DF.w$condition <- as.factor(DF.w$condition) 
-DF.w$image <- as.factor(DF.w$image)
-DF.w$lab <- as.factor(DF.w$lab)
 ```
 
 ```{r}
 write_rds(DF.l, "data/DF.l.rds")
 write_rds(DF.l.full, "data/DF.l.full.rds")
-write_rds(DF.w, "data/DF.w.rds")
 ```
 
 ```{r}
 
 ```
-

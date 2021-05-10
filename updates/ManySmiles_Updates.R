@@ -116,6 +116,66 @@ DF <- DF %>%
          ResponseId != 'R_22ulZEcvoGxSUAk')
 
 ## --------------------------------------------------------------------------------------
+# Issue Report 5/3/2021 13:42:19
+DF <- DF %>% 
+  filter(ResponseId != "R_1eK3FNOOZQZHov4",
+         ResponseId != "R_1giES2oovR2sJGo",
+         ResponseId != "R_1gvdVKTh2Q7IYvw",
+         ResponseId != "R_1OGBoYWh7Wy6t90",
+         ResponseId != "R_1OHttohbOonQR3f",
+         ResponseId != "R_1rGsxNubojx9p5s",
+         ResponseId != "R_2ab26zkYpicljIL",
+         ResponseId != "R_2ariEOYgWmeUb3D",
+         ResponseId != "R_2CJ3p00nKpIVD6p",
+         ResponseId != "R_2CJ3p00nKpIVD6p",
+         ResponseId != "R_2cnjhdhKXJO2EjU",
+         ResponseId != "R_2RZVdR1OUjWVKZM",
+         ResponseId != "R_2SxiNXD4kHPVdCK",
+         ResponseId != "R_2uwvT1YvWYxaCaN",
+         ResponseId != "R_2vc6Snh5gCe7RYs",
+         ResponseId != "R_2VQnnlaCBBz2ZOB",
+         ResponseId != "R_30wPj1MIb5h4Yx7",
+         ResponseId != "R_3DvATATzYPMh0MA",
+         ResponseId != "R_3inei4TekzBMBgC",
+         ResponseId != "R_3lAELDkUxJar9qx",
+         ResponseId != "R_3p9D1AsSzStrMbz",
+         ResponseId != "R_3szfC3fIUH6SDmw",
+         ResponseId != "R_6fbnBLbFxHrdaYp",
+         ResponseId != "R_74cC2EOdWmFJPdn",
+         ResponseId != "R_cUtMWAOJRPYKIBr",
+         ResponseId != "R_d0Yqdl0vmv56Y5b",
+         ResponseId != "R_QnxxXHNugmQ4UtH",
+         ResponseId != "R_RVKns4AP1CXaknL",
+         ResponseId != "R_Un0uPQitlSLvnFL",
+         ResponseId != "R_vCs5PjQe7Zw2xsl",
+         ResponseId != "R_W3eg3lgdvdl5n5n",
+         ResponseId != "R_w6562GdZqsX7WPT",
+         ResponseId != "R_xhAWlsmsZ5tj6qR",
+         ResponseId != "R_yqoCD9H8bUBnJCN",
+         ResponseId != "R_Z42JMemfxctMx1v",
+         ResponseId != "R_zTMyGcAsKIAHvBn")
+
+## --------------------------------------------------------------------------------------
+# Issue Report 5/3/2021 15:45:45
+DF <- DF %>% 
+  filter(ResponseId != "R_2fHgqY784oIsl23",
+         ResponseId != "R_2anPJwvrQ1xvaQw",
+         ResponseId != "R_1rCuopgnEYbhZbe",
+         ResponseId != "R_1Cg0Ut7JsIUCTLt",
+         ResponseId != "R_1gu4j0wbEEu5NpB",
+         ResponseId != "R_2Vm8k8lidsF4kK7")
+
+## --------------------------------------------------------------------------------------
+# Issue Report 5/4/2021 7:15:04
+DF <- DF %>% 
+  filter(ResponseId != "R_yyJM8Jbrnu9UcwN")
+
+## --------------------------------------------------------------------------------------
+# Issue Report 5/4/2021 7:35:25
+DF <- DF %>% 
+  filter(ResponseId != "R_1JJH6cMwmsFEs4N")
+
+## --------------------------------------------------------------------------------------
 DF <- DF %>% 
   # remove test data
   filter(DistributionChannel != 'preview') %>% 
