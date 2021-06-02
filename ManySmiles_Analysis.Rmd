@@ -121,7 +121,7 @@ m <- lmer(happiness ~
           data = DF.l)
 ```
 
-### Does awareness vary across conditions? 
+#### Does awareness vary across conditions? 
 ```{r}
 m <- lmer(awareness ~ 
             condition + image +
@@ -132,7 +132,7 @@ m <- lmer(awareness ~
           )
 ```
 
-### Does awareness moderate facial feedback effects?
+#### Does awareness moderate facial feedback effects?
 ```{r}
 m <- lmer(happiness ~ 
             trial + awareness + trial : awareness + condition + image +
@@ -145,7 +145,7 @@ m <- lmer(happiness ~
        data = DF.long)
 ```
 
-### Do Participants Report Experiencing More Happiness During the Smiling vs. Filler Trials?
+#### Do Participants Report Experiencing More Happiness During the Smiling vs. Filler Trials?
 ```{r}
 DF.l.fil <- DF.l.full %>% 
   filter(trial != "neutr") %>% 
@@ -176,6 +176,20 @@ DF.long.fil %>%
   group_by(trial.fvh) %>% 
   summarise(m = mean(happiness),
             sd = sd(happiness))  
+```
+
+#### Do Participants Report Experiencing Less Anger after Posing Happy vs. Neutral Expressions?
+
+#### Are Facial Feedback Effects Moderated by Individual Differences in Bodily Awareness?
+
+#### Are Facial Feedback Effects Moderated by Other Indicators of Pose Quality?
+
+#### In-Person vs. Online Data Collection?
+Note: this secondary analysis cannot be run because all labs opted to collect data online
+
+#### Do Facial Movement Tasks Lead to Different Levels of Anxiety?
+```{r}
+
 ```
 
 ## Exploratory analyses

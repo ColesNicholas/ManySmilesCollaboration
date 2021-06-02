@@ -209,7 +209,7 @@ Note: this code is set to eval = FALSE because it is only used when Nicholas nee
 
 Identify lab
 ```{r eval = FALSE}
-site <- "CHE_01"
+site <- "COL_02"
 ```
 
 Create review sheet
@@ -281,7 +281,13 @@ coding.DF <- data.frame(Awareness1 = numeric(),
 # create list of countries with completed open-ended data
 countries <- c("USA_02", "NOR_01", "ESP_01", 
                "FRA_01", "JPN_01", "HUN_01",
-               "ISR_01")
+               "ISR_01", "CHE_01", "GBR_01",
+               "POL_02", "AUS_01", "TUR_02",
+               "COL_03", "POL_01", "USA_01",
+               "USA_03", "ITA_01", "BRA_01",
+               "USA_04", "COL_02", "KEN_01", 
+               "NGA_01", "FRA_02", "TUR_01",
+               "DEU_01")
 
 # append coding data to coding.DF
 for (c in countries){
