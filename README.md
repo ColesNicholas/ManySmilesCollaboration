@@ -8,6 +8,9 @@
 ## ManySmilesAnalysis.Rmd:
 - Main data analysis script
 
+## ManySmiles_RR7_Prereg.docx
+- Copy of the pre-registration form
+
 ## data folder
 - coding: Each lab had two coders code the extent to which participants were (a) aware of the true purpose of the study and (b) distracted. This folder contains seperate .xlsx files for each coder in each lab. 
 - DF.l.rds: one row for each of the happy and neutral trials that participants completed (i.e., two rows per participant). This is the dataframe that is used for most analyses.
