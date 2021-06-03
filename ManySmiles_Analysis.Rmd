@@ -38,30 +38,29 @@ options(contrasts = c('contr.sum', 'contr.poly'))
 
 ## Open data
 ```{r}
-DF.l <- readRDS("DF.l.rds")
-DF.l.full <- readRDS("DF.l.full.rds")
-DF.w <- readRDS("DF.w.rds")
+DF.l <- readRDS("data/DF.l.rds")
+DF.l.full <- readRDS("data/DF.l.full.rds")
 ```
 
 ## Participant descriptives
 ```{r}
 # condition n
-table(DF.w$condition)
+table(DF.l$condition) %>% prop.table()
 
-table(DF.w$condition, DF.w$image)
+table(DF.l$condition, DF.l$image) %>% prop.table()
 
 # gender
-table(DF.w$indiv_gend_var) %>% prop.table()
+table(DF.l$indiv_gend_var) %>% prop.table()
 
 # age
-DF.w %>% 
+DF.l %>% 
   summarise(m = mean(indiv_agee_var,
                      na.rm = T),
             sd = sd(indiv_agee_var,
                     na.rm = T))
 
 # lab
-table(DF.w$lab)
+table(DF.l$lab)
 ```
 
 ## Analyses
@@ -100,11 +99,13 @@ anova(m)
 
 joint_tests(m, by = "condition")
 
-emmeans(c.lmer, pairwise ~ trial | image | condition,
+emmeans(m, pairwise ~ trial | image | condition,
         adjust = "none")
 
 rm(m)
 ```
+
+### STOP HERE
 
 ### Secondary analyses
 #### Pose quality moderation

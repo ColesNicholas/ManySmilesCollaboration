@@ -204,72 +204,6 @@ DF <- DF %>%
          ResponseId != "R_Y4Fp9VO9dCrgaFH")
 ```
 
-## Prep data review and coding sheets
-Note: this code is set to eval = FALSE because it is only used when Nicholas needs to prep a data review or coding sheet
-
-Identify lab
-```{r eval = FALSE}
-site <- "COL_02"
-```
-
-Create review sheet
-```{r eval = FALSE}
-review <- DF %>% 
-  # select site-specific data
-  filter(as.character(lab) == site) %>% 
-  
-  # select relevant variables
-  select(DistributionChannel, StartDate, Progress,
-         aware_intv_q01, aware_intv_q03,
-         quali_chek_que) %>% 
-  
-  # create column for identifying issues
-  mutate(Participant.Miscategorized = "",
-         Note = "") %>% 
-  
-  # rename columns
-  rename(DataClassification = DistributionChannel) %>% 
-   
-  # sort
-  arrange(desc(DataClassification),
-          StartDate)
-
-# rename levels of Test
-review[review$DataClassification == "preview", ]$DataClassification <- "test"
-review[review$DataClassification == "anonymous", ]$DataClassification <- "real"
-  
-gs4_create(paste0(site, "_DataClassification"),
-           sheets = review)
-
-rm(review)
-```
-
-Create coding sheet
-```{r eval = FALSE}
-coding <- DF %>% 
-  # select site-specific non-test data
-  filter(as.character(lab) == site,
-         DistributionChannel != 'preview') %>% 
-  
-  # randomize order
-  mutate(rand = runif(n = nrow(.))) %>% 
-  arrange(rand) %>% 
-  
-  # create blank coding columns
-  mutate(Awareness = "",
-         Distraction = "") %>% 
-  
-  # select relevant variables
-  select(ResponseId, 
-         aware_intv_q01, aware_intv_q02, aware_intv_q03, 
-         Awareness, quali_chek_que, Distraction)
-
-gs4_create(paste0(site, "_coder1"),
-           sheets = coding)
-
-rm(coding)
-```
-
 ## Open and merge open-ended coding data with Qualtrics data
 ```{r}
 # create blank dataframe for coding data
@@ -278,16 +212,9 @@ coding.DF <- data.frame(Awareness1 = numeric(),
                         Awareness2 = numeric(),
                         Distraction2 = numeric())
 
-# create list of countries with completed open-ended data
-countries <- c("USA_02", "NOR_01", "ESP_01", 
-               "FRA_01", "JPN_01", "HUN_01",
-               "ISR_01", "CHE_01", "GBR_01",
-               "POL_02", "AUS_01", "TUR_02",
-               "COL_03", "POL_01", "USA_01",
-               "USA_03", "ITA_01", "BRA_01",
-               "USA_04", "COL_02", "KEN_01", 
-               "NGA_01", "FRA_02", "TUR_01",
-               "DEU_01")
+# create list of countries
+countries <- DF[!is.na(DF$lab), ]$lab %>% 
+  unique()
 
 # append coding data to coding.DF
 for (c in countries){
@@ -330,7 +257,6 @@ for (c in countries){
   rename_at(.vars = vars(Awareness, Distraction), 
             function(x) paste0(x,
                                2))
-  
   # merge two coders' data
   coder <- full_join(x = coder1, y = coder2,
                      by = 'ResponseId')
@@ -407,7 +333,8 @@ DF <- DF %>%
   mutate(awareness = mean(c(Awareness1,
                             Awareness2)),
          distraction = mean(c(Distraction1,
-                              Distraction2)))
+                              Distraction2))) %>% 
+  ungroup()
 
 # examine IRR of awareness and distraction scores
 DF %>% 
@@ -430,7 +357,6 @@ Code for whether participants meet inclusion criteria
 - Did not complete study on desktop computer or laptop (will want to check that OS's are correct)
 - Awareness of hypothesis
 - Indicated that they were very distracted
-
 ```{r}
 DF <- DF %>% 
   # specific inclusion criterion
@@ -462,6 +388,16 @@ DF <- DF %>%
                              `metaa_data_que_Operating System` == "iPhone" |
                              `metaa_data_que_Operating System` == "iPad",
                            true = 0,
+                           false = 1),
+         
+         # awareness
+         inc.awa = if_else(condition = awareness > 1,
+                           true = 0,
+                           false = 1),
+         
+         # distraction
+         inc.dis = if_else(condition = distraction > 5,
+                           true = 0, 
                            false = 1)) %>% 
   
   # overall inclusion criteria
@@ -470,8 +406,8 @@ DF <- DF %>%
                          inc.fol == 0 |
                          inc.mat == 0 | 
                          inc.dev == 0 |
-                         awareness > 1 |
-                         distraction > 5,
+                         inc.awa == 0 |
+                         inc.dis == 0,
                        true = 0,
                        false = 1))
 
@@ -479,6 +415,22 @@ DF <- DF %>%
 DF <- DF %>% 
   select(-c(neutr_diff_att, happy_diff_att,
             `metaa_data_que_Operating System`))
+```
+
+```{r}
+DF %>% 
+  summarise(att = mean(inc.att,
+                       na.rm = T),
+            fol = mean(inc.fol,
+                       na.rm = T),
+            inc.mat = mean(inc.mat,
+                           na.rm = T),
+            inc.dev = mean(inc.dev,
+                           na.rm = T),
+            inc.awa = mean(inc.awa,
+                           na.rm = T),
+            inc.dis = mean(inc.dis,
+                           na.rm = T))
 ```
 
 Mean-center continuous variables that will be used in later moderation analyses
