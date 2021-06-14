@@ -400,13 +400,12 @@ DF <- DF %>%
                            true = 0, 
                            false = 1)) %>% 
   
-  # overall inclusion criteria
+  # overall non-awareness inclusion criteria
   mutate(inc = if_else(condition = 
                          inc.att == 0 |
                          inc.fol == 0 |
                          inc.mat == 0 | 
                          inc.dev == 0 |
-                         inc.awa == 0 |
                          inc.dis == 0,
                        true = 0,
                        false = 1))
@@ -435,13 +434,16 @@ DF %>%
 
 Mean-center continuous variables that will be used in later moderation analyses
 ```{r}
-DF$qulty_rate_var <- scale(x = DF$qulty_rate_var,
-                           center = T,
-                           scale = F)
-
-DF$awareness <- scale(x = DF$awareness,
-                      center = T,
-                      scale = F)
+DF <- DF %>% 
+  mutate(qulty_rate_var = qulty_rate_var - mean(qulty_rate_var,
+                                                na.rm = T),
+         qulty_smlr_var = qulty_smlr_var - mean(qulty_smlr_var,
+                                                na.rm = T),
+         qulty_feel_var = qulty_feel_var - mean(qulty_feel_var,
+                                                na.rm = T),
+         awareness = awareness - mean(awareness,
+                                      na.rm = T)
+         )
 ```
 
 ## Create long-format dataframe
@@ -492,7 +494,11 @@ DF.l <- DF.l %>%
                                indiv_body_015, indiv_body_016,
                                indiv_body_017, indiv_body_018))
           ) %>% 
-  ungroup()
+  ungroup() %>% 
+  
+  # mean center body awareness variable (for later moderator analyses)
+  mutate(indiv_body = indiv_body - mean(indiv_body,
+                                        na.rm = T))
 ```
 
 #### Sort columns and rows to improve readability
@@ -526,13 +532,14 @@ Delete original dataframe
 rm(DF)
 ```
 
-### Limit long format to only the critical trials
+### Limit long format to only the critical trials and participants who met the inclusion criteria
 ```{r}
 DF.l.full <- DF.l
 
 DF.l <- DF.l %>%
   filter(trial == "happy" |
-         trial == "neutr")
+         trial == "neutr",
+         inc == 1)
 ```
 
 ## Convert subject id, condition, study, and trial to factors
