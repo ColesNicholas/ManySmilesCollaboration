@@ -24,34 +24,19 @@ rm(list = ls())
                 'googlesheets4', 'readxl',
                 'psych')
   
-  # using vector of packages, call ipak function
+  # using vector of packages, call Ipak function
   Ipak(packages)
   
   # delete vestigial
   rm(packages, Ipak)
 
-# allow for Type III SS
+# allow for Type III Sums of Squares
 options(contrasts = c('contr.sum', 'contr.poly'))
 ```
 
-## Open data via Qualtrics API
-Set API credentials
-```{r eval = FALSE}
-qualtrics_api_credentials(
-  api_key = 'Qtd8CzAV5LeEfGyQQiMBpF8YXSq7zHbKF5A0j1Mn', 
-  base_url = 'sjc1.qualtrics.com',
-  install = TRUE,
-  overwrite = TRUE)
-```
-
-Load data
+## Open data via csv upload
 ```{r}
-DF <- all_surveys() %>% 
-  fetch_survey(surveyID = 'SV_1MHZifyxXFTQMGp',
-               force_request = TRUE,
-               label = FALSE,
-               convert = FALSE,
-               fileEncoding = "UTF-8")
+DF <- read.csv("data/raw/MSC_data_raw.csv")
 ```
 
 ## Fix documented issues
@@ -204,6 +189,12 @@ DF <- DF %>%
          ResponseId != "R_Y4Fp9VO9dCrgaFH")
 ```
 
+Issue Report 6/24/2021 17:20:17
+```{r}
+DF <- DF %>% 
+  filter(lab != "")
+```
+
 ## Open and merge open-ended coding data with Qualtrics data
 ```{r}
 # create blank dataframe for coding data
@@ -213,7 +204,7 @@ coding.DF <- data.frame(Awareness1 = numeric(),
                         Distraction2 = numeric())
 
 # create list of countries
-countries <- DF[!is.na(DF$lab), ]$lab %>% 
+countries <- DF[!is.na(DF$lab) & DF$lab != "", ]$lab %>% 
   unique()
 
 # append coding data to coding.DF
@@ -281,8 +272,11 @@ DF <- DF %>%
   # remove test data
   filter(DistributionChannel != 'preview') %>% 
   
-  # remove incomplete observations
+  # remove participants who did not get through entire survey
   filter(Progress > 90) %>% 
+  
+  # remove participants who did not answer any of the emotion reports
+  filter(!is.na(fil.1_emot_hap)) %>% 
   
   # select relevant variables
   select(
@@ -310,10 +304,8 @@ DF <- DF %>%
     indiv_body_001 : indiv_body_018,
     
     # quality control variables
-    Progress, `Duration (in seconds)`,
-    `metaa_data_que_Operating System`,
-    
-    intro_filt_1 : intro_filt_3, 
+    Progress, Duration..in.seconds.,
+    metaa_data_que_Operating.System,
     
     fil.1_math_mq1, neutr_math_mq1, 
     happy_math_mq1, fil.4_math_mq1, 
@@ -354,7 +346,7 @@ Code for whether participants meet inclusion criteria
 - Failed attention checks
 - Indicated that they did not follow pose expression
 - Indicated that their expression did not match the image of an actor completing the task correctly
-- Did not complete study on desktop computer or laptop (will want to check that OS's are correct)
+- Did not complete study on desktop computer or laptop
 - Awareness of hypothesis
 - Indicated that they were very distracted
 ```{r}
@@ -380,15 +372,20 @@ DF <- DF %>%
                            false = 0),
          
          # browser
-         inc.dev = if_else(condition = 
-                             `metaa_data_que_Operating System` == "Android 7.0" |
-                             `metaa_data_que_Operating System` == "Android 8.0.0" |
-                             `metaa_data_que_Operating System` == "Android 9" |
-                             `metaa_data_que_Operating System` == "Android 9" |
-                             `metaa_data_que_Operating System` == "iPhone" |
-                             `metaa_data_que_Operating System` == "iPad",
-                           true = 0,
-                           false = 1),
+         inc.dev = 
+           if_else(condition = 
+                     metaa_data_que_Operating.System == "Android 5.1.1" |
+                     metaa_data_que_Operating.System == "Android 7.0" |
+                     metaa_data_que_Operating.System == "Android 7.1.2" |
+                     metaa_data_que_Operating.System == "Android 8.0.0" |
+                     metaa_data_que_Operating.System == "Android 8.1.0" |
+                     metaa_data_que_Operating.System == "Android 9" |
+                     metaa_data_que_Operating.System == "Android 10" |
+                     metaa_data_que_Operating.System == "Android 11" |
+                     metaa_data_que_Operating.System == "iPhone" |
+                     metaa_data_que_Operating.System == "iPad",
+                   true = 0,
+                   false = 1),
          
          # awareness
          inc.awa = if_else(condition = awareness > 1,
@@ -413,23 +410,7 @@ DF <- DF %>%
 # delete vestigial columns
 DF <- DF %>% 
   select(-c(neutr_diff_att, happy_diff_att,
-            `metaa_data_que_Operating System`))
-```
-
-```{r}
-DF %>% 
-  summarise(att = mean(inc.att,
-                       na.rm = T),
-            fol = mean(inc.fol,
-                       na.rm = T),
-            inc.mat = mean(inc.mat,
-                           na.rm = T),
-            inc.dev = mean(inc.dev,
-                           na.rm = T),
-            inc.awa = mean(inc.awa,
-                           na.rm = T),
-            inc.dis = mean(inc.dis,
-                           na.rm = T))
+            metaa_data_que_Operating.System))
 ```
 
 Mean-center continuous variables that will be used in later moderation analyses
@@ -514,7 +495,7 @@ DF.l <- DF.l %>%
     happiness, enj, hap, lke, sat, # happiness ratings
     anxiety, nrv, wor, # anxiety ratings
     anger, # anger ratings
-    lke, # liking ratings
+    tsk, # liking ratings
     
     # inclusion criteria
     awareness, distraction, inc.att : inc,
@@ -532,36 +513,49 @@ Delete original dataframe
 rm(DF)
 ```
 
-### Limit long format to only the critical trials and participants who met the inclusion criteria
+#### Convert subject id, condition, study, and trial to factors
 ```{r}
+DF.l <- DF.l %>% 
+  mutate(ResponseId = factor(ResponseId),
+         lab = factor(lab),
+         condition = factor(condition), 
+         image = factor(image),
+         trial = factor(trial))
+```
+
+### Create dataframes used for analyses
+```{r}
+# dataset containing filler and pose trials
 DF.l.full <- DF.l
 
+# dataset containing only pose trials
 DF.l <- DF.l %>%
   filter(trial == "happy" |
-         trial == "neutr",
-         inc == 1)
-```
+         trial == "neutr") %>% 
+  mutate(trial = factor(trial)) # relevel trial factor
 
-## Convert subject id, condition, study, and trial to factors
-```{r}
-DF.l$ResponseId <- as.factor(DF.l$ResponseId)
-DF.l$lab <- as.factor(DF.l$lab)
-DF.l$condition <- as.factor(DF.l$condition) 
-DF.l$image <- as.factor(DF.l$image)
-DF.l$trial <- as.factor(DF.l$trial)
-
-DF.l.full$ResponseId <- as.factor(DF.l.full$ResponseId)
-DF.l.full$lab <- as.factor(DF.l.full$lab)
-DF.l.full$condition <- as.factor(DF.l.full$condition) 
-DF.l.full$image <- as.factor(DF.l.full$image)
-DF.l.full$trial <- as.factor(DF.l.full$trial)
+# dataset containing pose trials only from participants 
+# who meet strict inclusion criteria
+DF.l.inc <- DF.l %>% 
+  filter(inc == 1,
+         inc.awa == 1)
 ```
 
 ```{r}
-write_rds(DF.l, "data/DF.l.rds")
 write_rds(DF.l.full, "data/DF.l.full.rds")
+write_rds(DF.l, "data/DF.l.rds")
+write_rds(DF.l.inc, "data/DF.l.inc.rds")
+
+# export country data for map making
+DF.l %>% 
+  mutate(country = substr(lab,
+                          start = 1,
+                          stop = 3)) %>% 
+  group_by(country) %>% 
+  summarise(n = length(unique(ResponseId))) %>% 
+  write.csv("data/country.n.csv")
 ```
 
 ```{r}
-
+# end of code
 ```

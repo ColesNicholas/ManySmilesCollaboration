@@ -1,5 +1,5 @@
 ---
-title: 'Many Smiles Collaboration Data Analysis'
+title: 'Data Analysis Code for the Many Smiles Collaboration'
 editor_options:
   chunk_output_type: console
 ---
@@ -32,21 +32,44 @@ rm(list = ls())
 # turn scientific notation off
 options(scipen = 999)
 
-# allow for Type III SS
+# allow for Type III Sums of Square
 options(contrasts = c('contr.sum', 'contr.poly'))
+
+# set plotting options 
+theme_set(theme_classic() +
+          theme(strip.background = 
+                  element_rect(fill = "gray35"),
+                strip.text = 
+                  element_text(colour = "white"),
+                panel.border = element_blank()
+                )
+          )
 ```
 
 ## Open data
 ```{r}
-DF.l <- readRDS("data/DF.l.rds")
 DF.l.full <- readRDS("data/DF.l.full.rds")
+DF.l <- readRDS("data/DF.l.rds")
+DF.l.inc <- readRDS("data/DF.l.inc.rds")
 ```
 
 ## Participant descriptives
 ```{r}
+# n participants
+DF.l$ResponseId %>% unique() %>% length()
+
+# n labs
+DF.l$lab %>% unique() %>% length()
+
+# n countries
+DF.l$lab %>% 
+  substr(start = 1,
+         stop = 3) %>% 
+  unique() %>% 
+  length()
+
 # condition n
 table(DF.l$condition) %>% prop.table()
-
 table(DF.l$condition, DF.l$image) %>% prop.table()
 
 # gender
@@ -58,9 +81,6 @@ DF.l %>%
                      na.rm = T),
             sd = sd(indiv_agee_var,
                     na.rm = T))
-
-# lab
-table(DF.l$lab)
 ```
 
 ## Analyses
@@ -83,70 +103,113 @@ models[["primary"]][["full"]] <-
 anova(models[["primary"]][["full"]])
 
 joint_tests(models[["primary"]][["full"]], 
-            by = "condition")
+            by = "condition",
+            lmerTest.limit = 10000)
 
 emmeans(models[["primary"]][["full"]], 
         pairwise ~ trial | image | condition,
         adjust = "none")
 ```
 
-#### With partial dataset
-```{r}
-# remove participants who exhibited awareness of the hypothesis
-DF.l.unaware <- DF.l %>% 
-  filter(inc.awa == 1)
-```
-
+#### With application of pre-registered exclusion criteria
 ```{r}
 models[["primary"]][["partial"]] <-
   lmer(happiness ~ trial * condition * image + 
          (1 | lab) +
          (1 | ResponseId),
-       data = DF.l.unaware)
+       data = DF.l.inc)
 ```
 
 ```{r}
 anova(models[["primary"]][["partial"]])
 
 joint_tests(models[["primary"]][["partial"]], 
-            by = "condition")
+            by = "condition",
+            lmerTest.limit = 3008)
+
+joint_tests(models[["primary"]][["partial"]], 
+            by = c("image", "condition"),
+            lmerTest.limit = 3008)
+
+joint_tests(models[["primary"]][["partial"]], 
+            by = "image",
+            lmerTest.limit = 3008)
 
 emmeans(models[["primary"]][["partial"]], 
         pairwise ~ trial | image | condition,
         adjust = "none")
 
-rm(DF.l.unaware)
+DF.l.inc %>% 
+  group_by(condition, trial) %>% 
+  summarise(m = mean(happiness),
+            sd = sd(happiness))
+
+DF.l.inc %>% 
+  group_by(condition, image, trial) %>% 
+  summarise(m = mean(happiness),
+            sd = sd(happiness))
 ```
 
 ### Secondary analyses
-#### Do Participants Report Experiencing More Happiness During the Smiling vs. Filler Trials?
+#### Liking reports
 ```{r}
 # prepare data
 DF.l.fil <- DF.l.full %>% 
-  filter(trial != "neutr") %>% 
-  mutate(
-    trial.fvh = ifelse(test = trial == "happy",
-                       yes = "happy",
-                       no = "filler"),
-    trial.fvh = factor(trial.fvh)
-    )
+  filter(inc == 1,
+         inc.awa == 1)
 
 # fit model
-models[["secondary"]][["alt.exp"]] <-
-  lmer(happiness ~ trial.fvh * condition * image +
+models[["secondary"]][["liking"]] <-
+  lmer(tsk ~ trial * condition +
          (1 | lab) +
          (1 | ResponseId),
        data = DF.l.fil)
+```
 
-rm(DF.l.fil)
+```{r}
+anova(models[["secondary"]][["liking"]])
+
+joint_tests(models[["secondary"]][["liking"]], 
+            by = "condition",
+            lmerTest.limit = 3008)
+
+emmeans(models[["secondary"]][["liking"]], 
+        pairwise ~ trial | condition,
+        adjust = "none")
+
+DF.l.fil %>% 
+  group_by(condition, trial) %>% 
+  summarise(m = mean(happiness),
+            sd = sd(happiness))
+
+DF.l.fil %>% 
+  group_by(condition, image, trial) %>% 
+  summarise(m = mean(happiness),
+            sd = sd(happiness))
+```
+
+#### Do Participants Report Experiencing More Happiness During the Smiling vs. Filler Trials?
+```{r}
+# fit model
+models[["secondary"]][["alt.exp"]] <-
+  lmer(happiness ~ trial * condition * image+
+         (1 | lab) +
+         (1 | ResponseId),
+       data = DF.l.fil)
 ```
 
 ```{r}
 anova(models[["secondary"]][["alt.exp"]])
 
+joint_tests(models[["secondary"]][["alt.exp"]], 
+            by = "image",
+            lmerTest.limit = 6016)
+
 emmeans(models[["secondary"]][["alt.exp"]], 
-        pairwise ~ trial.fvh | image | condition,
+        pairwise ~ trial | condition | image,
         adjust = "none")
+
+rm(DF.l.fil)
 ```
 
 #### Effect of facial feedback on anxiety
@@ -168,8 +231,11 @@ emmeans(models[["secondary"]][["anxiety"]],
 emmeans(models[["secondary"]][["anxiety"]], 
         pairwise ~ condition,
         adjust = "none")
-```
 
+emmeans(models[["secondary"]][["anxiety"]], 
+        pairwise ~ trial | condition,
+        adjust = "none")
+```
 
 #### Effect of facial feedback on anger
 ```{r}
@@ -190,17 +256,16 @@ emmeans(models[["secondary"]][["anger"]],
 emmeans(models[["secondary"]][["anger"]], 
         pairwise ~ condition,
         adjust = "none")
+
+DF.l %>% 
+  group_by(trial) %>% 
+  summarise(m.anx = mean(anxiety),
+            sd.anx = sd(anxiety),
+            m.ang = mean(anger),
+            sd.ang = sd(anger))
 ```
 
 ### Supplemental Analyses
-Using full dataset (that does not exclude participants based on pose quality ratings), isolate the critical trials
-```{r}
-DF.l.pose <- DF.l.full %>% 
-  filter(trial != 'fil.1',
-         trial != 'fil.4') %>% 
-  mutate(trial = factor(trial))
-```
-
 #### Condition-based differences in inclusion criteria and moderators
 ##### Quality
 ###### Pose quality
@@ -208,7 +273,7 @@ DF.l.pose <- DF.l.full %>%
 models[["supplementary"]][["cond.diff"]][["quality.rating"]] <-
   lmer(qulty_rate_var ~ condition * image +
          (1 | lab),
-       data = DF.l.pose)
+       data = DF.l)
 ```
 
 ```{r}
@@ -224,7 +289,7 @@ emmeans(models[["supplementary"]][["cond.diff"]][["quality.rating"]],
 models[["supplementary"]][["cond.diff"]][["simil.rating"]] <-
   lmer(qulty_smlr_var ~ condition * image +
          (1 | lab),
-       data = DF.l.pose)
+       data = DF.l)
 ```
 
 ```{r}
@@ -240,7 +305,7 @@ emmeans(models[["supplementary"]][["cond.diff"]][["simil.rating"]],
 models[["supplementary"]][["cond.diff"]][["feel.rating"]] <-
   lmer(qulty_feel_var ~ condition * image +
          (1 | lab),
-       data = DF.l.pose)
+       data = DF.l)
 ```
 
 ```{r}
@@ -257,7 +322,7 @@ Awareness
 models[["supplementary"]][["cond.diff"]][["awareness"]] <-
   lmer(awareness ~ condition * image +
          (1 | lab),
-       data = DF.l.pose)
+       data = DF.l)
 ```
 
 ```{r}
@@ -278,29 +343,56 @@ models[["supplementary"]][["quality.rating"]] <-
          trial * condition * image * qulty_rate_var +
          (1 | lab) + 
          (1 | ResponseId),
-       data = DF.l.pose)
+       data = DF.l)
 ```
 
 ```{r}
 anova(models[["supplementary"]][["quality.rating"]])
 
+lmer(happiness ~ 
+         trial * image * qulty_rate_var +
+         (1 | lab) + 
+         (1 | ResponseId),
+       data = DF.l,
+     subset = condition == "mimicry") %>% 
+  anova()
+
+lmer(happiness ~ 
+         trial * image * qulty_rate_var +
+         (1 | lab) + 
+         (1 | ResponseId),
+       data = DF.l,
+     subset = condition == "directd") %>% 
+  anova()
+
+lmer(happiness ~ 
+         trial * image * qulty_rate_var +
+         (1 | lab) + 
+         (1 | ResponseId),
+       data = DF.l,
+     subset = condition == "pentask") %>% 
+  anova()
+
 # decompose trial * quality * condition interaction
 ## examine when quality is one SD below mean
-decomp.low = mean(DF.l.pose$qulty_rate_var,
-                  na.rm = T) -
-  sd(DF.l.pose$qulty_rate_var,
-     na.rm = T)
+# decomp.low = mean(DF.l$qulty_rate_var,
+#                   na.rm = T) -
+#   sd(DF.l$qulty_rate_var,
+#      na.rm = T)
+decomp.low = min(DF.l$qulty_rate_var,
+                 na.rm = T)
   
 emmeans(models[["supplementary"]][["quality.rating"]],
         pairwise ~ trial | condition | qulty_rate_var,
         at = list(qulty_rate_var = decomp.low))
 
 ## when quality is one SD above mean
-decomp.high = mean(DF.l.pose$qulty_rate_var,
-                  na.rm = T) +
-  sd(DF.l.pose$qulty_rate_var,
-     na.rm = T)
-
+# decomp.high = mean(DF.l$qulty_rate_var,
+#                   na.rm = T) +
+#   sd(DF.l$qulty_rate_var,
+#      na.rm = T)
+decomp.high = max(DF.l$qulty_rate_var,
+                  na.rm = T)
 emmeans(models[["supplementary"]][["quality.rating"]],
         pairwise ~ trial | condition | qulty_rate_var,
         at = list(qulty_rate_var = decomp.high))
@@ -315,17 +407,41 @@ models[["supplementary"]][["simil.rating"]] <-
          trial * condition * image * qulty_smlr_var +
          (1 | lab) + 
          (1 | ResponseId),
-       data = DF.l.pose)
+       data = DF.l)
 ```
 
 ```{r}
 anova(models[["supplementary"]][["simil.rating"]])
 
+lmer(happiness ~ 
+         trial * image * qulty_smlr_var +
+         (1 | lab) + 
+         (1 | ResponseId),
+       data = DF.l,
+     subset = condition == "mimicry") %>% 
+  anova()
+
+lmer(happiness ~ 
+         trial * image * qulty_smlr_var +
+         (1 | lab) + 
+         (1 | ResponseId),
+       data = DF.l,
+     subset = condition == "directd") %>% 
+  anova()
+
+lmer(happiness ~ 
+         trial * image * qulty_smlr_var +
+         (1 | lab) + 
+         (1 | ResponseId),
+       data = DF.l,
+     subset = condition == "pentask") %>% 
+  anova()
+
 # decompose trial * quality * condition interaction
 ## examine when quality is one SD below mean
-decomp.low = mean(DF.l.pose$qulty_smlr_var,
+decomp.low = mean(DF.l$qulty_smlr_var,
                   na.rm = T) -
-  sd(DF.l.pose$qulty_smlr_var,
+  sd(DF.l$qulty_smlr_var,
      na.rm = T)
   
 emmeans(models[["supplementary"]][["simil.rating"]],
@@ -333,9 +449,9 @@ emmeans(models[["supplementary"]][["simil.rating"]],
         at = list(qulty_smlr_var = decomp.low))
 
 ## when quality is one SD above mean
-decomp.high = mean(DF.l.pose$qulty_smlr_var,
-                  na.rm = T) +
-  sd(DF.l.pose$qulty_smlr_var,
+decomp.high = mean(DF.l$qulty_smlr_var,
+                   na.rm = T) +
+  sd(DF.l$qulty_smlr_var,
      na.rm = T)
 
 emmeans(models[["supplementary"]][["simil.rating"]],
@@ -352,17 +468,41 @@ models[["supplementary"]][["feel.rating"]] <-
          trial * condition * image * qulty_feel_var +
          (1 | lab) + 
          (1 | ResponseId),
-       data = DF.l.pose)
+       data = DF.l)
 ```
 
 ```{r}
 anova(models[["supplementary"]][["feel.rating"]])
 
+lmer(happiness ~ 
+         trial * image * qulty_feel_var +
+         (1 | lab) + 
+         (1 | ResponseId),
+       data = DF.l,
+     subset = condition == "mimicry") %>% 
+  anova()
+
+lmer(happiness ~ 
+         trial * image * qulty_feel_var +
+         (1 | lab) + 
+         (1 | ResponseId),
+       data = DF.l,
+     subset = condition == "directd") %>% 
+  anova()
+
+lmer(happiness ~ 
+         trial * image * qulty_feel_var +
+         (1 | lab) + 
+         (1 | ResponseId),
+       data = DF.l,
+     subset = condition == "pentask") %>% 
+  anova()
+
 # decompose trial * quality * condition interaction
 ## examine when quality is one SD below mean
-decomp.low = mean(DF.l.pose$qulty_feel_var,
+decomp.low = mean(DF.l$qulty_feel_var,
                   na.rm = T) -
-  sd(DF.l.pose$qulty_feel_var,
+  sd(DF.l$qulty_feel_var,
      na.rm = T)
   
 emmeans(models[["supplementary"]][["feel.rating"]],
@@ -370,16 +510,16 @@ emmeans(models[["supplementary"]][["feel.rating"]],
         at = list(qulty_feel_var = decomp.low))
 
 ## when quality is one SD above mean
-decomp.high = mean(DF.l.pose$qulty_feel_var,
+decomp.high = mean(DF.l$qulty_feel_var,
                   na.rm = T) +
-  sd(DF.l.pose$qulty_feel_var,
+  sd(DF.l$qulty_feel_var,
      na.rm = T)
 
 emmeans(models[["supplementary"]][["feel.rating"]],
         pairwise ~ trial | condition | qulty_feel_var,
         at = list(qulty_feel_var = decomp.high))
 
-rm(decomp.high, decomp.low, DF.l.pose)
+rm(decomp.high, decomp.low)
 ```
 
 ##### Awareness
@@ -395,7 +535,7 @@ models[["supplementary"]][["awareness"]] <-
 ```{r}
 anova(models[["supplementary"]][["awareness"]])
 
-# decompose trial * quality * condition interaction
+# decompose trial * awareness  interaction
 ## examine when awareness is one SD below mean
 decomp.low = mean(DF.l$awareness,
                   na.rm = T) -
@@ -403,7 +543,7 @@ decomp.low = mean(DF.l$awareness,
      na.rm = T)
   
 emmeans(models[["supplementary"]][["awareness"]],
-        pairwise ~ trial | condition | awareness,
+        pairwise ~ trial | awareness,
         at = list(awareness = decomp.low))
 
 ## when awareness is one SD above mean
@@ -413,10 +553,10 @@ decomp.high = mean(DF.l$awareness,
      na.rm = T)
 
 emmeans(models[["supplementary"]][["awareness"]],
-        pairwise ~ trial | condition | awareness,
+        pairwise ~ trial | awareness,
         at = list(qulty_rate_var = decomp.high))
 
-rm(decomp.high, decomp.low, DF.l.pose)
+rm(decomp.high, decomp.low)
 ```
 
 ##### Body awareness
@@ -432,56 +572,93 @@ models[["supplementary"]][["body.aware"]] <-
 
 ```{r}
 anova(models[["supplementary"]][["body.aware"]])
+
+# decompose trial * awareness  interaction
+## examine when awareness is one SD below mean
+decomp.low = mean(DF.l$indiv_body,
+                  na.rm = T) -
+  sd(DF.l$indiv_body,
+     na.rm = T)
+  
+emmeans(models[["supplementary"]][["body.aware"]],
+        pairwise ~ trial | indiv_body,
+        at = list(awareness = decomp.low))
+
+## when awareness is one SD above mean
+decomp.high = mean(DF.l$indiv_body,
+                   na.rm = T) -
+  sd(DF.l$indiv_body,
+     na.rm = T)
+
+emmeans(models[["supplementary"]][["body.aware"]],
+        pairwise ~ trial | indiv_body,
+        at = list(qulty_rate_var = decomp.high))
+
+rm(decomp.high, decomp.low)
 ```
 
 ## Data viz
-Remove participants who exhibited awareness of the hypothesis
-```{r}
-DF.l.unaware <- DF.l %>% 
-  filter(inc.awa == 1)
-```
-
+### Figure 1
 Fix labels
 ```{r}
-DF.l.unaware <- DF.l.unaware %>% 
-  mutate(trial = recode(trial,
+DF.viz <- 
+  DF.l.full %>%
+  filter(inc == 1,
+         inc.awa == 1) %>% 
+  mutate(trial = factor(trial,
+                        levels = c("happy",
+                                   "neutr",
+                                   "fil.1",
+                                   "fil.4")),
+         trial = recode(trial,
+                        fil.1 = "filler 1",
+                        happy = "happy",
                         neutr = "neutral",
-                        happy = "happy"),
+                        fil.4 = "filler 2"),
+         condition = factor(condition,
+                            levels = c("mimicry",
+                                       "directd",
+                                       "pentask")),
          condition = recode(condition,
-                            directd = "directed facial action",
+                            directd = "voluntary facial action",
                             mimicry = "facial mimicry",
                             pentask = "pen-in-mouth"),
          image = recode(image,
-                        absentt = "stimuli absent",
-                        present = "stimuli present")
+                        absentt = "positive stimuli absent",
+                        present = "positive stimuli present")
          )
 ```
 
-Plotting options
 ```{r}
-theme_set(theme(panel.grid.major = element_blank(), 
-                panel.grid.minor = element_blank(),
-                legend.position = "none"))
-```
+png(filename = "Figurec.png", 
+       units = "in", 
+       width = 9, 
+       height = 5.07, 
+       res = 300)
 
-```{r}
-ggplot(DF.l.unaware, 
+ggplot(DF.viz, 
        aes(x = trial, 
            y = happiness)) +
   facet_grid(rows = vars(image),
              cols = vars(condition)) +
   geom_jitter(width = .1, 
-              alpha = .075) + 
-  geom_line(alpha = .075, 
+              alpha = .035) + 
+  geom_line(alpha = .035, 
             aes(group = ResponseId)) +
   stat_summary(geom = "line",
                colour = "black",
                size = 1,
                aes(group = 1)) +
-  stat_summary(fun.data = "mean_cl_boot",
-               colour = "black", 
-               size = .5) +
+  stat_summary(colour = "black", 
+               size = .5,
+               fun = "mean") +
   labs(y = "Self-reported happiness", 
-       x = "Facial expression pose")
+       x = "Task")
+
+dev.off()
+```
+
+```{r}
+# end of code
 ```
 
