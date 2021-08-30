@@ -272,7 +272,7 @@ DF <- DF %>%
   # remove test data
   filter(DistributionChannel != 'preview') %>% 
   
-  # remove participants who did not get through entire survey
+  # remove participants who did not get through most of survey
   filter(Progress > 90) %>% 
   
   # remove participants who did not answer any of the emotion reports
@@ -416,14 +416,14 @@ DF <- DF %>%
 Mean-center continuous variables that will be used in later moderation analyses
 ```{r}
 DF <- DF %>% 
-  mutate(qulty_rate_var = qulty_rate_var - mean(qulty_rate_var,
-                                                na.rm = T),
-         qulty_smlr_var = qulty_smlr_var - mean(qulty_smlr_var,
-                                                na.rm = T),
-         qulty_feel_var = qulty_feel_var - mean(qulty_feel_var,
-                                                na.rm = T),
-         awareness = awareness - mean(awareness,
-                                      na.rm = T)
+  mutate(qulty_rate_var.c = qulty_rate_var - mean(qulty_rate_var,
+                                                  na.rm = T),
+         qulty_smlr_var.c = qulty_smlr_var - mean(qulty_smlr_var,
+                                                  na.rm = T),
+         qulty_feel_var.c = qulty_feel_var - mean(qulty_feel_var,
+                                                  na.rm = T),
+         awareness.c = awareness - mean(awareness,
+                                        na.rm = T)
          )
 ```
 
@@ -502,25 +502,40 @@ DF.l <- DF.l %>%
     
     # quality items
     qulty_rate_var, qulty_feel_var, qulty_smlr_var,
+    qulty_rate_var.c, qulty_feel_var.c, qulty_smlr_var.c,
     
     # demographics
     indiv_gend_var, indiv_agee_var, indiv_body, inc
     )
 ```
 
-Delete original dataframe
-```{r}
-rm(DF)
+```{r eval = FALSE}
+# delete this
+DF.w <- DF.l %>% 
+  select(ResponseId, trial,happiness, 
+         awareness, qulty_rate_var, 
+         qulty_feel_var, qulty_smlr_var, 
+         indiv_body) %>% 
+  pivot_wider(names_from = trial,
+              values_from = happiness)
 ```
 
 #### Convert subject id, condition, study, and trial to factors
 ```{r}
+DF.w <- DF %>% 
+  mutate(ResponseId = factor(ResponseId),
+         lab = factor(lab),
+         condition = factor(condition), 
+         image = factor(image))
+
 DF.l <- DF.l %>% 
   mutate(ResponseId = factor(ResponseId),
          lab = factor(lab),
          condition = factor(condition), 
          image = factor(image),
          trial = factor(trial))
+
+rm(DF)
 ```
 
 ### Create dataframes used for analyses
@@ -542,10 +557,13 @@ DF.l.inc <- DF.l %>%
 ```
 
 ```{r}
+write_rds(DF.w, "data/DF.w.rds")
 write_rds(DF.l.full, "data/DF.l.full.rds")
 write_rds(DF.l, "data/DF.l.rds")
 write_rds(DF.l.inc, "data/DF.l.inc.rds")
+```
 
+```{r eval = FALSE}
 # export country data for map making
 DF.l %>% 
   mutate(country = substr(lab,
@@ -555,6 +573,7 @@ DF.l %>%
   summarise(n = length(unique(ResponseId))) %>% 
   write.csv("data/country.n.csv")
 ```
+
 
 ```{r}
 # end of code
