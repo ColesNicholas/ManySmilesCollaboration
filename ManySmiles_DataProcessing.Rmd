@@ -272,6 +272,9 @@ DF <- DF %>%
   # remove test data
   filter(DistributionChannel != 'preview') %>% 
   
+  # remove participants who did not indicate that they (a) had a pen nearby, (b) completed the study on a computer, and (c) were in a setting with minimal distractions 
+  filter(intro_filt == "1,2,3") %>% 
+  
   # remove participants who did not get through most of survey
   filter(Progress > 90) %>% 
   
@@ -359,7 +362,7 @@ DF <- DF %>%
                            true = 1,
                            false = 0),
          
-         # participant ratings of degree to which they followed instructions 
+         # participant ratings of degree to which they followed instructions
          inc.fol = if_else(condition = qulty_rate_var > 1,
                            true = 1,
                            false = 0),
