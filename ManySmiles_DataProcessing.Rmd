@@ -430,6 +430,14 @@ DF <- DF %>%
          )
 ```
 
+Identify country of origin
+```{r}
+DF <- DF %>% 
+  mutate(country = substr(lab,
+                          start = 1,
+                          stop = 3))
+```
+
 ## Create long-format dataframe
 ```{r}
 DF.l <- DF %>%
@@ -492,6 +500,7 @@ DF.l <- DF.l %>%
   select( 
     # subject id and condition identifiers 
     ResponseId, lab, 
+    country, UserLanguage,
     mode, condition, image, trial,
     
     # emotion ratings
@@ -512,24 +521,14 @@ DF.l <- DF.l %>%
     )
 ```
 
-```{r eval = FALSE}
-# delete this
-DF.w <- DF.l %>% 
-  select(ResponseId, trial,happiness, 
-         awareness, qulty_rate_var, 
-         qulty_feel_var, qulty_smlr_var, 
-         indiv_body) %>% 
-  pivot_wider(names_from = trial,
-              values_from = happiness)
-```
-
-#### Convert subject id, condition, study, and trial to factors
+#### Convert subject id, lab, country, language, condition, study, and trial to factors
 ```{r}
 DF.w <- DF %>% 
   mutate(ResponseId = factor(ResponseId),
          lab = factor(lab),
          condition = factor(condition), 
-         image = factor(image))
+         image = factor(image),
+         country)
 
 DF.l <- DF.l %>% 
   mutate(ResponseId = factor(ResponseId),
