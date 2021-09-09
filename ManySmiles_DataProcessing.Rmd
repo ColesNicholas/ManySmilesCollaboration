@@ -526,13 +526,16 @@ DF.l <- DF.l %>%
 DF.w <- DF %>% 
   mutate(ResponseId = factor(ResponseId),
          lab = factor(lab),
+         country = factor(country),
+         UserLanguage = factor(UserLanguage),
          condition = factor(condition), 
-         image = factor(image),
-         country)
+         image = factor(image))
 
 DF.l <- DF.l %>% 
   mutate(ResponseId = factor(ResponseId),
          lab = factor(lab),
+         country = factor(country),
+         UserLanguage = factor(UserLanguage),
          condition = factor(condition), 
          image = factor(image),
          trial = factor(trial))
@@ -567,10 +570,7 @@ write_rds(DF.l.inc, "data/DF.l.inc.rds")
 
 ```{r eval = FALSE}
 # export country data for map making
-DF.l %>% 
-  mutate(country = substr(lab,
-                          start = 1,
-                          stop = 3)) %>% 
+DF.w %>% 
   group_by(country) %>% 
   summarise(n = length(unique(ResponseId))) %>% 
   write.csv("data/country.n.csv")
