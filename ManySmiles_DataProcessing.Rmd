@@ -273,7 +273,7 @@ DF <- DF %>%
   filter(DistributionChannel != 'preview') %>% 
   
   # remove participants who did not indicate that they (a) had a pen nearby, (b) completed the study on a computer, and (c) were in a setting with minimal distractions 
-  filter(intro_filt == "1,2,3") %>% 
+  #filter(intro_filt == "1,2,3") %>% 
   
   # remove participants who did not get through most of survey
   filter(Progress > 90) %>% 
