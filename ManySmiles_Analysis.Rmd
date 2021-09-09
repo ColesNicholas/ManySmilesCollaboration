@@ -1310,215 +1310,6 @@ dev.off()
 ```
 
 ### Figure 5
-Prep dataframe
-```{r}
-meta.DF <- DF.l %>%
-  # pivot data wider
-  pivot_wider(names_from = trial,
-              values_from = happiness,
-              id_cols = c(ResponseId,
-                          country,
-                          lab,
-                          UserLanguage,
-                          condition)) %>% 
-  
-  # calculate difference score
-  rowwise() %>% 
-  mutate(diff = happy - neutr) %>% 
-  
-  # for each condition and country, find correlation between two trials and the mean/sd of the difference score
-  group_by(condition, country) %>% 
-  summarise(n = n(),
-            corr = cor(happy, neutr),
-            m.diff = mean(diff),
-            sd.diff = sd(diff)) %>% 
-  ungroup() %>% 
-  
-  # calculate cohen drm
-  # formula: Cooper, Hedges, & Valentine, 2009; p. 229
-  rowwise() %>% 
-  mutate(d = (m.diff / sd.diff) * 
-           sqrt(2 * (1 - corr))) %>% 
-  
-  # calculate variance of d
-  mutate(d.var = ((1 / n) + ((d^2) / (2 * n))) * 
-           2 * (1 - corr)) %>% 
-  
-  # calculate CI of d
-  mutate(lb = d - (1.96 * sqrt(d.var)),
-         ub = d + (1.96 * sqrt(d.var))) %>% 
-  
-  # select relevant variables
-  select(condition, country, d, d.var, lb, ub)
-
-# fit meta-analyses
-meta.m  <- rma(
-  yi = d,
-  vi = d.var,
-  slab = country,
-  data = meta.DF,
-  subset = condition == "mimicry"
-)
-
-meta.d <- rma(
-  yi = d,
-  vi = d.var,
-  slab = country,
-  data = meta.DF,
-  subset = condition == "directd"
-)
-
-meta.p <- rma(
-  yi = d,
-  vi = d.var,
-  slab = country,
-  data = meta.DF,
-  subset = condition == "pentask"
-)
-
-# append meta-analytic overall effects to dataframe
-meta.DF <- meta.DF %>% 
-  mutate(Q = NA,
-         Q.p = NA,
-         i2 = NA,
-         t2 = NA)
-
-meta.DF <- rbind(
-  meta.DF,
-  
-  # mimicry
-  cbind(
-    condition = "mimicry",
-    country = "Overall",
-    d = meta.m[["beta"]] %>%
-      as.numeric(),
-    d.var = meta.m[["se"]] ^ 2,
-    lb = meta.m[["ci.lb"]],
-    ub = meta.m[["ci.ub"]],
-    Q = round(meta.m$QE, 2),
-    Q.p = round(meta.m$QEp, 3),
-    i2 = round(meta.m$I2, 0),
-    t2 = round(meta.m$tau2, 2)
-  ),
-  
-  # directd
-  cbind(
-    condition = "directd",
-    country = "Overall",
-    d = meta.d[["beta"]] %>%
-      as.numeric(),
-    d.var = meta.d[["se"]] ^ 2,
-    lb = meta.d[["ci.lb"]],
-    ub = meta.d[["ci.ub"]],
-    Q = round(meta.d$QE, 2),
-    Q.p = round(meta.d$QEp, 3),
-    i2 = round(meta.d$I2, 0),
-    t2 = round(meta.d$tau2, 2)
-  ),
-  
-  # pentask
-  cbind(
-    condition = "pentask",
-    country = "Overall",
-    d = meta.p[["beta"]] %>%
-      as.numeric(),
-    d.var = meta.p[["se"]] ^ 2,
-    lb = meta.p[["ci.lb"]],
-    ub = meta.p[["ci.ub"]],
-    Q = round(meta.p$QE, 2),
-    Q.p = round(meta.p$QEp, 3),
-    i2 = round(meta.p$I2, 0),
-    t2 = round(meta.p$tau2, 2)
-  )
-) %>% as.data.frame()
-
-rm(meta.d, meta.m, meta.p)
-```
-
-Format dataset
-```{r}
-meta.DF <- meta.DF %>% 
-  mutate(
-    # identify which effects are overall vs. country-specific
-    overall = if_else(condition = country == "Overall",
-                      true = 1, 
-                      false = 0),
-    
-    # order effect sizes by whether they are (a) overall vs. country-specific and then (b) size of the effect
-    country = fct_reorder(country,
-                          desc(d)),
-    country = fct_reorder(country,
-                          desc(overall)),
-    
-    # fix format of numeric variables
-    d = as.numeric(d),
-    lb = as.numeric(lb),
-    ub = as.numeric(ub),
-    
-    # relevel and recode condition variable
-    condition = factor(condition,
-                       levels = c("mimicry",
-                                  "directd",
-                                  "pentask")),
-    condition = recode(condition,
-                       directd = "voluntary facial action",
-                       mimicry = "facial mimicry",
-                       pentask = "pen-in-mouth"))
-```
-
-Create forest plot
-```{r}
-png(filename = "figures/Figure5.png", 
-    units = "in", 
-    width = 9, 
-    height = 5.07, 
-    res = 300)
-
-ggplot(data = meta.DF, 
-       aes(x = country, 
-           y = d,
-           ymin = lb,
-           ymax = ub)) +
-  geom_hline(yintercept = 0, 
-             color = "black", 
-             linetype = "dashed", 
-             alpha = .5) +
-  geom_point(aes(shape = as.factor(overall),
-                 size = as.factor(overall),
-                 colour = as.factor(overall))) +
-  geom_errorbar(width = .5,
-                aes(colour = as.factor(overall))) +
-  scale_shape_manual(values = c(15, 18)) +
-  scale_size_manual(values = c(2, 4)) +
-  scale_color_manual(values= c("dark grey", 
-                               "#3366FF")) +
-  coord_flip() +
-  facet_grid(cols = vars(condition)) +
-  labs(y = expression(paste("Cohen's ", 
-                            italic("d"),
-                            "(Happy pose minus neutral pose)")),
-       x = "Country") +
-  ylim(-.5, 1.3) +
-  geom_richtext(data = meta.DF[meta.DF$overall == 1, ],
-            aes(label = paste0("overall <i>d</i> = ", round(d, 2),
-                               " [", round(lb, 2), ", ",
-                               round(ub, 2), "]",
-                               "<br>",
-                               " Q = ", Q, ", <i>p</i> < .005",
-                               "<br>",
-                               " <i>I<sup>2</sup></i> = ", i2, "%", 
-                               ", <i>T<sup>2</sup></i> = ", t2),
-                x = 19.5,
-                y = 1.3),
-            size = 2.2,
-            label.colour = NA,
-            hjust = 1)
-
-dev.off()
-```
-
-### FIGURE 5 NEW
-
 Calculate country-specific effect sizes for facial feedback tasks
 ```{r}
 pose.es.DF <- DF.l %>%
@@ -1559,31 +1350,6 @@ pose.es.DF <- DF.l %>%
   
   # select relevant variables
   select(condition, country, d, d.var, lb, ub)
-
-# fit meta-analyses
-meta.m  <- rma(
-  yi = d,
-  vi = d.var,
-  slab = country,
-  data = meta.DF,
-  subset = condition == "mimicry"
-)
-
-meta.d <- rma(
-  yi = d,
-  vi = d.var,
-  slab = country,
-  data = meta.DF,
-  subset = condition == "directd"
-)
-
-meta.p <- rma(
-  yi = d,
-  vi = d.var,
-  slab = country,
-  data = meta.DF,
-  subset = condition == "pentask"
-)
 ```
 
 Calculate country-specific effect sizes for image
@@ -1784,7 +1550,7 @@ meta.DF <- meta.DF %>%
                        directd = "voluntary facial action",
                        mimicry = "facial mimicry",
                        pentask = "pen-in-mouth",
-                       image = "images"))
+                       image = "exposure to positive images"))
 ```
 
 Create forest plot
@@ -1800,6 +1566,10 @@ ggplot(data = meta.DF,
            y = d,
            ymin = lb,
            ymax = ub)) +
+  geom_rect(aes(fill = condition),
+            xmin = -Inf, xmax = Inf,
+            ymin = -Inf, ymax = Inf,
+            alpha = 0.3) +
   geom_hline(yintercept = 0, 
              color = "black", 
              linetype = "dashed", 
@@ -1813,11 +1583,15 @@ ggplot(data = meta.DF,
   scale_size_manual(values = c(2, 4)) +
   scale_color_manual(values= c("dark grey", 
                                "#3366FF")) +
+  scale_fill_manual(values = c("white",
+                               "white",
+                               "white",
+                               "ivory2")) +
   coord_flip() +
   facet_grid(cols = vars(condition)) +
   labs(y = expression(paste("Cohen's ", 
-                            italic("d"),
-                            "(Happy pose minus neutral pose)")),
+                            italic("d"))
+                      ),
        x = "Country") +
   ylim(-1.5, 1.3) +
   geom_richtext(data = meta.DF[meta.DF$overall == 1, ],
@@ -1838,59 +1612,3 @@ ggplot(data = meta.DF,
 
 dev.off()
 ```
-
-
-### JUNK
-```{r}
-tmp <- DF.l %>% 
-  # pivot data wide
-  pivot_wider(names_from = trial,
-              values_from = happiness,
-              id_cols = c(ResponseId,
-                          country,
-                          image,
-                          lab,
-                          UserLanguage,
-                          condition)) %>% 
-  
-  # calculate happiness scores across posing trials
-  rowwise() %>% 
-  mutate(hap.avg = mean(c(happy, neutr))) %>% 
-  ungroup() %>% 
-  
-  # calculate happiness mean and sd when images were present vs. absent in each country
-  group_by(country, image) %>% 
-  summarise(n = n(),
-            m = mean(hap.avg),
-            sd = sd(hap.avg)) %>%
-  ungroup() %>% 
-  
-  # pivot data wider
-  pivot_wider(names_from = image,
-              values_from = c(n, m, sd)) %>% 
-  
-  # calculate cohen's drm
-  # formula: Cooper, Hedges, & Valentine, 2009; p. 226
-  rowwise() %>% 
-  mutate(sd.pooled = sqrt((((n_absentt - 1) * (sd_absentt^2)) +
-                             ((n_present - 1) * (sd_present^2))) /
-                            (n_absentt + n_present - 2))) %>% 
-  mutate(d = (m_present - m_absentt) / sd.pooled) %>% 
-
-  # calculate variance of cohen's d
-  mutate(d.var = ((n_absentt + n_present) / (n_absentt * n_present)) +
-           ((d^2) / (2 * (n_absentt + n_present)))) %>% 
-  
-  # calculate CI of d
-  mutate(lb = d - (1.96 * sqrt(d.var)),
-         ub = d + (1.96 * sqrt(d.var)))
-
-tmp2 <- rma(
-  yi = d,
-  vi = d.var,
-  slab = country,
-  data = tmp)
-
-forest(tmp2)
-```
-
