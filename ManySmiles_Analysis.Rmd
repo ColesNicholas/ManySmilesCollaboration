@@ -286,26 +286,28 @@ DF.l %>%
 
 Calculate effect of condition on feelings of anxeity
 ```{r}
-tmp <- DF.l %>% 
-  # recode condition
-  mutate(condition_p.v.no.p = 
-           if_else(condition = condition == "pentask",
-                   true = 1,
-                   false = 0)) %>% 
-  
-  # calculate group M and SD
-  group_by(condition_p.v.no.p) %>% 
-  summarise(n = n(),
-            m = mean(anxiety),
-            sd = sd(anxiety)) %>% 
-  pivot_wider(names_from = condition_p.v.no.p,
-              values_from = c(n, m, sd)) %>% 
-  
-  # calculate effect size
-  mutate(sd.pooled = sqrt((((n_1 - 1) * (sd_1^2)) +
-                             ((n_0 - 1) * (sd_0^2))) /
-                            (n_1 + n_0 - 2))) %>% 
-  mutate(d = (m_1 - m_0) / sd.pooled)
+  DF.l %>% 
+    # recode condition
+    mutate(condition_p.v.no.p = 
+             if_else(condition = condition == "pentask",
+                     true = 1,
+                     false = 0)) %>% 
+    
+    # calculate group M and SD
+    group_by(condition_p.v.no.p) %>% 
+    summarise(n = n(),
+              m = mean(anxiety),
+              sd = sd(anxiety)) %>% 
+    pivot_wider(names_from = condition_p.v.no.p,
+                values_from = c(n, m, sd)) %>% 
+    
+    # calculate effect size
+    mutate(sd.pooled = sqrt((((n_1 - 1) * (sd_1^2)) +
+                               ((n_0 - 1) * (sd_0^2))) /
+                              (n_1 + n_0 - 2))) %>% 
+    mutate(d = (m_1 - m_0) / sd.pooled) %>% 
+    select(d) %>% 
+    print()
   
 ```
 
