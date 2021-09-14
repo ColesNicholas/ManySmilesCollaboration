@@ -1087,7 +1087,24 @@ DF.viz2 <- DF.viz %>%
   pivot_wider(names_from = "trial",
               values_from = "happiness") %>% 
   rowwise() %>% 
-  mutate(happiness.avg = mean(c(happy, neutral)))
+  mutate(happiness.avg = mean(c(happy, neutral))) %>% 
+  ungroup()
+
+tmp <- DF.viz2 %>% 
+  group_by(image, condition) %>% 
+  summarise(n = n(),
+            m = round(mean(happiness.avg),
+                      2),
+            sd = round(sd(happiness.avg),
+                       2))
+
+png(
+  filename = "figures/Figure3b.png",
+  units = "in",
+  width = 9,
+  height = 5.07,
+  res = 300
+)
 
 ggplot(DF.viz2, 
        aes(x = image, 
@@ -1103,9 +1120,27 @@ ggplot(DF.viz2,
                size = .5,
                fun = "mean") +
   labs(y = "Self-reported happiness", 
-       x = "Task") +
+       x = "Stimuli Presence") +
+  
+  # add task-specific M's, SDs,
+  geom_text(data = tmp,
+            aes(label = paste0("n = ", n,
+                               "\n", 
+                               "M = ", m,
+                               "\n",
+                               "SD = ", sd)),
+            y = 7.3,
+            size = 2) +
   scale_y_continuous(
-    breaks = c(1, 3, 5, 7))
+    breaks = c(1, 3, 5, 7)) +
+  # adjust scales
+  scale_y_continuous(
+    breaks = c(1, 3, 5, 7),
+    expand = expand_scale(mult = c(0, .1))) +
+  
+  scale_x_discrete(labels = c("absent", "present"))
+
+dev.off()
 ```
 
 ### Figure 4
