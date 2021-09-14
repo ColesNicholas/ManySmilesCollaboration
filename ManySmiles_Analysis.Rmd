@@ -122,6 +122,12 @@ models[["primary"]][["partial"]] <-
          (1 | ResponseId),
        data = DF.l.inc)
 
+lmer(happiness ~ trial  * image + 
+       (1 | lab) +
+       (1 | ResponseId),
+     data = DF.l.inc,
+     subset = condition == "pentask") %>% anova()
+
 # tmp <- lmer(happiness ~ trial * condition * image + 
 #               (1 | lab) +
 #               (1 | ResponseId) +
@@ -238,7 +244,21 @@ models[["secondary"]][["anxiety"]] <-
   lmer(anxiety ~ trial * image * condition + 
          (1 | lab) +
          (1 | ResponseId),
-       data = DF.l)
+       data = DF.l.full)
+
+tmp <-
+  lmer(anxiety ~ trial * condition + 
+         (1 | lab) +
+         (1 | ResponseId),
+       data = DF.l.full,
+       subset = image == "absentt")
+
+anova(tmp)
+
+# put an examination of the means does not indicate that physically placing the pen in your mouth increases anxiety.
+emmeans(tmp, 
+        pairwise ~ trial | condition,
+        adjust = "none")
 ```
 
 ```{r}
@@ -1786,6 +1806,89 @@ dev.off()
 
 # TMP
 ```{r}
+tmp <- DF.viz %>% 
+  select(ResponseId, condition, trial, anxiety, anger) %>% 
+  pivot_longer(cols = c(anxiety, anger))
+
+ggplot(tmp, 
+       aes(x = trial, 
+           y = value)) +
+  # split plot by image and condition
+  facet_grid(rows = vars(name),
+             cols = vars(condition)) +
+  
+  # add jittered raw data
+  geom_jitter(width = .1, 
+              alpha = .07,
+              colour = "dark grey") + 
+  
+  # connect participants' jittered raw data
+  geom_line(alpha = .07, 
+            aes(group = ResponseId),
+            colour = "dark grey") +
+  
+  # add summary lines
+  stat_summary(geom = "line",
+               colour = "#3366FF",
+               size = 1,
+               aes(group = 1)) +
+  
+  stat_summary(colour = "#3366FF", 
+               size = .5,
+               fun = "mean")
+
+ggplot(DF.viz, 
+       aes(x = trial, 
+           y = anxiety)) +
+  # split plot by image and condition
+  facet_grid(cols = vars(condition)) +
+  
+  # add jittered raw data
+  geom_jitter(width = .1, 
+              alpha = .07,
+              colour = "dark grey") + 
+  
+  # connect participants' jittered raw data
+  geom_line(alpha = .07, 
+            aes(group = ResponseId),
+            colour = "dark grey") +
+  
+  # add summary lines
+  stat_summary(geom = "line",
+               colour = "#3366FF",
+               size = 1,
+               aes(group = 1)) +
+  
+  stat_summary(colour = "#3366FF", 
+               size = .5,
+               fun = "mean")
+
+
+```
+
+
+# TMP
+```{r}
+control.anx <-
+  lmer(happiness ~ anxiety + trial * image + 
+         (1 | lab) +
+         (1 | ResponseId),
+       data = DF.l.inc,
+       subset = condition == "pentask")
+
+anova(control.anx)
+
+control.anx <-
+  lmer(happiness ~ trial * image + 
+         (1 | lab) +
+         (1 | ResponseId),
+       data = DF.l.inc,
+       subset = condition == "pentask" & anxiety == 1)
+
+anova(control.anx)
+
+
+
 # add ANOVA table
 tmp <- anova(models[["primary"]][["partial"]]) %>% 
   rownames_to_column(var = "Omnibus test") %>% 
@@ -1908,5 +2011,38 @@ rm(t.c.joint)
 emmeans(models[["primary"]][["full"]], 
         pairwise ~ trial | image | condition,
         adjust = "none")
+```
+
+
+```{r}
+tmp <- lmer(happiness ~ trial * image 
+     + (1 |ResponseId) +
+       (1 | lab),
+     data = DF.l.inc,
+     subset = condition == "pentask")
+
+summary(tmp)
+anova(tmp)
+
+# 606 to 351
+tmp1 <-
+  DF.l.inc %>% 
+  filter(condition == "pentask") %>% 
+  filter(anxiety == 1)
+
+tmp1 %>% 
+  group_by(trial, image) %>%
+  count()
+
+tmp2 <- lmer(happiness ~ trial * image + 
+             + (1 |ResponseId) +
+               (1 | lab),
+             data = tmp1)
+summary(tmp2)
+
+emmeans(tmp2, 
+        pairwise ~ trial | image,
+        adjust = "none")
+
 ```
 
