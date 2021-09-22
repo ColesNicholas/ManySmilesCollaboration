@@ -93,75 +93,56 @@ models <- list()
 ```
 
 ### Primary analyses
-#### With full dataset
-```{r}
-models[["primary"]][["full"]] <-
-  lmer(happiness ~ trial * condition * image + 
-         (1 | lab) +
-         (1 | ResponseId),
-       data = DF.l)
-```
-
-```{r}
-anova(models[["primary"]][["full"]])
-
-joint_tests(models[["primary"]][["full"]], 
-            by = "condition",
-            lmerTest.limit = 10000)
-
-emmeans(models[["primary"]][["full"]], 
-        pairwise ~ trial | image | condition,
-        adjust = "none")
-```
-
 #### With application of pre-registered exclusion criteria
 ```{r}
-models[["primary"]][["partial"]] <-
-  lmer(happiness ~ trial * condition * image + 
-         (1 | lab) +
-         (1 | ResponseId),
+# identify desired model
+f <- happiness ~ trial * condition * image +
+  (1 | ResponseId) +
+  (1 + trial * image * condition | lab)
+
+# find most complex model that converges
+m <- buildmer(f,
+              reduce.fixed = F,
+              data = DF.l.inc,
+              REML = F,
+              buildmerControl = 
+                buildmerControl(
+                  direction = "order",
+                  control = lmerControl(optimizer = "bobyqa"),
+                  )
+              )
+
+# fit most complex model that converges
+models[["primary"]][["prereg"]] <-
+  lmer(formula(m@model),
+       data = DF.l.inc,
+       control = lmerControl(optimizer = "bobyqa"))
+
+
+models[["primary"]][["prereg"]] <-
+  lmer(happiness ~ trial * condition * image +
+         (1 | ResponseId) +
+         (1| lab),
        data = DF.l.inc)
 
-lmer(happiness ~ trial  * image + 
-       (1 | lab) +
-       (1 | ResponseId),
-     data = DF.l.inc,
-     subset = condition == "pentask") %>% anova()
-
-# tmp <- lmer(happiness ~ trial * condition * image + 
-#               (1 | lab) +
-#               (1 | ResponseId) +
-#               (trial | lab) +
-#               (condition | lab) +
-#               (image | lab) +
-#               (trial * condition | lab) +
-#               (trial * image | lab) +
-#               (condition * image | lab) +
-#               (trial * condition * image | lab),
-#        data = DF.l.inc)
-# 
-# # test of random term significance
-# ranova(tmp)
-# 
-# anova(tmp)
+# delete vestigial 
+rm(f, m)
 ```
 
 ```{r}
-anova(models[["primary"]][["partial"]])
+summary(models[["primary"]][["prereg"]])
 
-joint_tests(models[["primary"]][["partial"]], 
+anova(models[["primary"]][["prereg"]])
+
+joint_tests(models[["primary"]][["prereg"]], 
             by = "condition",
             lmerTest.limit = 3008)
 
-joint_tests(models[["primary"]][["partial"]], 
+joint_tests(models[["primary"]][["prereg"]], 
             by = c("image", "condition"),
             lmerTest.limit = 3008)
 
-joint_tests(models[["primary"]][["partial"]], 
-            by = "image",
-            lmerTest.limit = 3008)
-
-emmeans(models[["primary"]][["partial"]], 
+emmeans(models[["primary"]][["prereg"]], 
         pairwise ~ trial | image | condition,
         adjust = "none")
 
@@ -175,6 +156,91 @@ DF.l.inc %>%
   summarise(m = mean(happiness),
             sd = sd(happiness))
 ```
+
+#### Sensitivity analysis with full dataset
+```{r}
+# identify desired model
+f <- happiness ~ trial * condition * image +
+  (1 | ResponseId) +
+  (1 + trial * image * condition | lab)
+
+# find most complex model that converges
+m <- buildmer(f,
+              reduce.fixed = F,
+              data = DF.l,
+              buildmerControl = 
+                buildmerControl(
+                  direction = "order",
+                  control = lmerControl(optimizer = "bobyqa")
+                  )
+              )
+
+# fit most complex model that converges
+models[["primary"]][["full"]] <-
+  lmer(formula(m@model),
+       data = DF.l,
+       control = lmerControl(optimizer = "bobyqa"))
+
+# delete vestigial 
+rm(f, m)
+```
+
+```{r}
+models[["primary"]][["full"]]
+
+anova(models[["primary"]][["full"]])
+
+joint_tests(models[["primary"]][["full"]], 
+            by = "condition",
+            lmerTest.limit = 10000)
+
+emmeans(models[["primary"]][["full"]], 
+        pairwise ~ trial | image | condition,
+        adjust = "none")
+```
+
+#### Exploratory test of pen-in-mouth excluding anxious participants
+```{r}
+pen.NoAnx.DF <- DF.l.inc %>% 
+  filter(condition == "pentask",
+         anxiety == 1)
+
+# identify desired model
+f <- happiness ~ trial * image +
+  (1 | ResponseId) +
+  (1 + trial * image | lab)
+
+# find most complex model that converges
+m <- buildmer(f,
+              reduce.fixed = F,
+              data = pen.NoAnx.DF,
+              buildmerControl = 
+                buildmerControl(
+                  direction = "order",
+                  control = lmerControl(optimizer = "bobyqa")
+                  )
+              )
+
+# fit most complex model that converges
+models[["primary"]][["pen.no.anx"]] <-
+  lmer(formula(m@model),
+       data = pen.NoAnx.DF,
+       control = lmerControl(optimizer = "bobyqa"))
+
+# delete vestigial 
+rm(f, m)
+```
+
+```{r}
+models[["primary"]][["pen.no.anx"]]
+
+anova(models[["primary"]][["pen.no.anx"]])
+
+joint_tests(models[["primary"]][["pen.no.anx"]], 
+            by = "image",
+            lmerTest.limit = 10000)
+```
+
 
 ### Secondary analyses
 #### Liking reports
@@ -218,10 +284,11 @@ DF.l.fil %>%
 ```{r}
 # fit model
 models[["secondary"]][["alt.exp"]] <-
-  lmer(happiness ~ trial * condition * image+
-         (1 | lab) +
+  lmer(happiness ~ trial * condition * image +
+         (1 + trial + image | lab) +
          (1 | ResponseId),
-       data = DF.l.fil)
+       data = DF.l.fil,
+       control = lmerControl(optimizer = "bobyqa"))
 ```
 
 ```{r}
@@ -1886,6 +1953,9 @@ control.anx <-
        subset = condition == "pentask" & anxiety == 1)
 
 anova(control.anx)
+joint_tests(control.anx, 
+            by = "image",
+            lmerTest.limit = 10000)
 
 
 
