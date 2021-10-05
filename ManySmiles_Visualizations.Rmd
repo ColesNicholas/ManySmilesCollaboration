@@ -20,7 +20,7 @@ rm(list = ls())
   }
 
   # vector of necessary packages
-  packages <- c('tidyverse', 'ggplot2', 'ggtext')
+  packages <- c('tidyverse', 'ggplot2', 'ggtext', 'metafor')
   
   # using vector of packages, call ipak function
   Ipak(packages)
@@ -647,7 +647,17 @@ rm(f5.DF)
 ```
 
 
-### Figure 5
+## Figure 6
+Reformat DF.l.inc to make the code a little cleaner
+```{r}
+DF.l.inc <- DF.l.inc %>%
+  mutate(image = recode(image,
+                        `positive stimuli absent` = "absentt",
+                        `positive stimuli present` = "present")
+         )
+```
+
+
 Calculate country-specific effect sizes for facial feedback tasks
 ```{r}
 pose.es.DF <- DF.l.inc %>%
@@ -662,12 +672,12 @@ pose.es.DF <- DF.l.inc %>%
   
   # calculate difference score
   rowwise() %>% 
-  mutate(diff = happy - neutr) %>% 
+  mutate(diff = happy - neutral) %>% 
   
   # for each condition and country, find correlation between two trials and the mean/sd of the difference score
   group_by(condition, country) %>% 
   summarise(n = n(),
-            corr = cor(happy, neutr),
+            corr = cor(happy, neutral),
             m.diff = mean(diff),
             sd.diff = sd(diff)) %>% 
   ungroup() %>% 
@@ -709,8 +719,8 @@ img.es.DF <- DF.l.inc %>%
   # calculate happiness mean and sd when images were present vs. absent in each country
   group_by(country, image) %>% 
   summarise(n = n(),
-            m = mean(neutr),
-            sd = sd(neutr)) %>%
+            m = mean(neutral),
+            sd = sd(neutral)) %>%
   ungroup() %>% 
   
   # pivot data wider
@@ -748,7 +758,7 @@ rm(pose.es.DF, img.es.DF)
 
 Fit random effects meta-analyses
 ```{r}
-# see if effect is moderated by task
+# overall effect
 rma(
   yi = d,
   vi = d.var,
@@ -757,6 +767,7 @@ rma(
   subset = condition != "image"
 )
 
+# moderation by facial feedback task
 rma(
   yi = d,
   vi = d.var,
@@ -766,19 +777,20 @@ rma(
   subset = condition != "image"
 )
 
+# facial feedback task meta-analysis
 meta.m  <- rma(
   yi = d,
   vi = d.var,
   slab = country,
   data = meta.DF,
-  subset = condition == "mimicry")
+  subset = condition == "facial mimicry")
 
 meta.d <- rma(
   yi = d,
   vi = d.var,
   slab = country,
   data = meta.DF,
-  subset = condition == "directd"
+  subset = condition == "voluntary facial action"
 )
 
 meta.p <- rma(
@@ -786,9 +798,10 @@ meta.p <- rma(
   vi = d.var,
   slab = country,
   data = meta.DF,
-  subset = condition == "pentask"
+  subset = condition == "pen-in-mouth"
 )
 
+# meta-analysis for images
 meta.i <- rma(
   yi = d,
   vi = d.var,
@@ -811,7 +824,7 @@ meta.DF <- rbind(
   
   # mimicry
   cbind(
-    condition = "mimicry",
+    condition = "facial mimicry",
     country = "Overall",
     d = meta.m[["beta"]] %>%
       as.numeric(),
@@ -826,7 +839,7 @@ meta.DF <- rbind(
   
   # directd
   cbind(
-    condition = "directd",
+    condition = "voluntary facial action",
     country = "Overall",
     d = meta.d[["beta"]] %>%
       as.numeric(),
@@ -841,7 +854,7 @@ meta.DF <- rbind(
   
   # pentask
   cbind(
-    condition = "pentask",
+    condition = "pen-in-mouth",
     country = "Overall",
     d = meta.p[["beta"]] %>%
       as.numeric(),
@@ -895,24 +908,21 @@ meta.DF <- meta.DF %>%
     
     # relevel and recode condition variable
     condition = factor(condition,
-                       levels = c("mimicry",
-                                  "directd",
-                                  "pentask",
+                       levels = c("facial mimicry",
+                                  "voluntary facial action",
+                                  "pen-in-mouth",
                                   "image")),
     condition = recode(condition,
-                       directd = "voluntary facial action",
-                       mimicry = "facial mimicry",
-                       pentask = "pen-in-mouth",
                        image = "exposure to positive images"))
 ```
 
 Create forest plot
 ```{r}
- png(filename = "figures/Figure5.png", 
-     units = "in", 
-     width = 9, 
-     height = 5.07, 
-     res = 300)
+png(filename = "figures/Figure6.png", 
+    units = "in", 
+    width = 9, 
+    height = 5.07, 
+    res = 300)
 
 ggplot(data = meta.DF, 
        aes(x = country, 
@@ -965,250 +975,6 @@ ggplot(data = meta.DF,
             hjust = 0)
 
 dev.off()
+
+rm(meta.DF)
 ```
-
-# TMP
-```{r}
-tmp <- DF.viz %>% 
-  select(ResponseId, condition, trial, anxiety, anger) %>% 
-  pivot_longer(cols = c(anxiety, anger))
-
-ggplot(tmp, 
-       aes(x = trial, 
-           y = value)) +
-  # split plot by image and condition
-  facet_grid(rows = vars(name),
-             cols = vars(condition)) +
-  
-  # add jittered raw data
-  geom_jitter(width = .1, 
-              alpha = .07,
-              colour = "dark grey") + 
-  
-  # connect participants' jittered raw data
-  geom_line(alpha = .07, 
-            aes(group = ResponseId),
-            colour = "dark grey") +
-  
-  # add summary lines
-  stat_summary(geom = "line",
-               colour = "#3366FF",
-               size = 1,
-               aes(group = 1)) +
-  
-  stat_summary(colour = "#3366FF", 
-               size = .5,
-               fun = "mean")
-
-ggplot(DF.viz, 
-       aes(x = trial, 
-           y = anxiety)) +
-  # split plot by image and condition
-  facet_grid(cols = vars(condition)) +
-  
-  # add jittered raw data
-  geom_jitter(width = .1, 
-              alpha = .07,
-              colour = "dark grey") + 
-  
-  # connect participants' jittered raw data
-  geom_line(alpha = .07, 
-            aes(group = ResponseId),
-            colour = "dark grey") +
-  
-  # add summary lines
-  stat_summary(geom = "line",
-               colour = "#3366FF",
-               size = 1,
-               aes(group = 1)) +
-  
-  stat_summary(colour = "#3366FF", 
-               size = .5,
-               fun = "mean")
-
-
-```
-
-
-# TMP
-```{r}
-control.anx <-
-  lmer(happiness ~ anxiety + trial * image + 
-         (1 | lab) +
-         (1 | ResponseId),
-       data = DF.l.inc,
-       subset = condition == "pentask")
-
-anova(control.anx)
-
-control.anx <-
-  lmer(happiness ~ trial * image + 
-         (1 | lab) +
-         (1 | ResponseId),
-       data = DF.l.inc,
-       subset = condition == "pentask" & anxiety == 1)
-
-anova(control.anx)
-joint_tests(control.anx, 
-            by = "image",
-            lmerTest.limit = 10000)
-
-
-
-# add ANOVA table
-tmp <- anova(models[["primary"]][["partial"]]) %>% 
-  rownames_to_column(var = "Omnibus test") %>% 
-  mutate(`Pr(>F)` = stars.pval(`Pr(>F)`),
-         Decomposition = NA,
-         Result = paste0("F(", NumDF, ", ", 
-                         round(DenDF, 0), ") = ",
-                         round(`F value`, 2),
-                         `Pr(>F)`)
-         ) %>%
-  select(`Omnibus test`,
-         Decomposition,
-         Result)
-
-# add pose pairwise
-pose.pair <- emmeans(models[["primary"]][["partial"]], 
-        pairwise ~ trial,
-        adjust = "none",
-        infer = c(TRUE, TRUE),
-        lmerTest.limit = 10000)$contrasts %>%
-  as.data.frame() %>% 
-  mutate(`Omnibus test` = "trial",
-         Decomposition = contrast,
-         p.value = stars.pval(p.value),
-         Result = paste0("t(", 
-                         round(df, 2),
-                         ") = ",
-                         round(t.ratio, 2),
-                         p.value,
-                         ", M_diff 95% CI [",
-                         round(lower.CL, 2), ", ",
-                         round(upper.CL, 2), "]")) %>% 
-  select(`Omnibus test`, Decomposition, Result)
-
-tmp <- rbind(tmp, pose.pair)
-rm(pose.pair)
-
-# add condition pairwise
-cond.pair <- emmeans(models[["primary"]][["partial"]], 
-        pairwise ~ condition,
-        adjust = "none",
-        infer = c(TRUE, TRUE),
-        lmerTest.limit = 10000)$contrasts %>%
-  as.data.frame() %>% 
-  mutate(`Omnibus test` = "condition",
-         Decomposition = contrast,
-         p.value = stars.pval(p.value),
-         Result = paste0("t(", 
-                         round(df, 2),
-                         ") = ",
-                         round(t.ratio, 2),
-                         p.value,
-                         ", M_diff 95% CI [",
-                         round(lower.CL, 2), ", ",
-                         round(upper.CL, 2), "]")) %>% 
-  select(`Omnibus test`, Decomposition, Result)
-
-tmp <- rbind(tmp, cond.pair)
-rm(cond.pair)
-
-# add image pairwise
-imag.pair <- emmeans(models[["primary"]][["partial"]], 
-        pairwise ~ image,
-        adjust = "none",
-        infer = c(TRUE, TRUE),
-        lmerTest.limit = 10000)$contrasts %>%
-  as.data.frame() %>% 
-  mutate(`Omnibus test` = "image",
-         Decomposition = contrast,
-         p.value = stars.pval(p.value),
-         Result = paste0("t(", 
-                         round(df, 2),
-                         ") = ",
-                         round(t.ratio, 2),
-                         p.value,
-                         ", M_diff 95% CI [",
-                         round(lower.CL, 2), ", ",
-                         round(upper.CL, 2), "]")) %>% 
-  select(`Omnibus test`, Decomposition, Result)
-
-tmp <- rbind(tmp, imag.pair)
-rm(imag.pair)
-
-# trial * condition
-t.c.joint <- 
-  joint_tests(models[["primary"]][["partial"]], 
-              by = "condition",
-              lmerTest.limit = 10000) %>% 
-  as.data.frame() %>% 
-  filter(`model term` == "trial") %>% 
-  mutate(`Omnibus test` = "trial:condition",
-         Decomposition = condition,
-         Result = paste0("F( ", df1, ", ",
-                         round(df2, 2), ") = ",
-                         round(F.ratio, 2),
-                         stars.pval(p.value))) %>%
-  select(`Omnibus test`, Decomposition, Result)
-
-tmp <- rbind(tmp, t.c.joint)
-rm(t.c.joint)
-
-# condition * image
-c.i.joint <- 
-  joint_tests(models[["primary"]][["partial"]], 
-              by = "image",
-              lmerTest.limit = 10000) %>% 
-  as.data.frame() %>% 
-  filter(`model term` == "trial") %>% 
-  mutate(`Omnibus test` = "condition:image",
-         Decomposition = condition,
-         Result = paste0("F( ", df1, ", ",
-                         round(df2, 2), ") = ",
-                         round(F.ratio, 2),
-                         stars.pval(p.value))) %>%
-  select(`Omnibus test`, Decomposition, Result)
-
-tmp <- rbind(tmp, t.c.joint)
-rm(t.c.joint)
-
-emmeans(models[["primary"]][["full"]], 
-        pairwise ~ trial | image | condition,
-        adjust = "none")
-```
-
-
-```{r}
-tmp <- lmer(happiness ~ trial * image 
-     + (1 |ResponseId) +
-       (1 | lab),
-     data = DF.l.inc,
-     subset = condition == "pentask")
-
-summary(tmp)
-anova(tmp)
-
-# 606 to 351
-tmp1 <-
-  DF.l.inc %>% 
-  filter(condition == "pentask") %>% 
-  filter(anxiety == 1)
-
-tmp1 %>% 
-  group_by(trial, image) %>%
-  count()
-
-tmp2 <- lmer(happiness ~ trial * image + 
-             + (1 |ResponseId) +
-               (1 | lab),
-             data = tmp1)
-summary(tmp2)
-
-emmeans(tmp2, 
-        pairwise ~ trial | image,
-        adjust = "none")
-
-```
-
