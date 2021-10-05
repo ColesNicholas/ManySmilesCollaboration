@@ -354,7 +354,7 @@ dev.off()
 rm(f2b.DF, desc)
 ```
 
-## Real Figure 3
+## Figure 3
 Prep dataframe
 ```{r}
 f3.DF <- DF.l.inc %>% 
@@ -422,61 +422,47 @@ ggplot(f3.DF,
   scale_x_discrete(labels = c("absent", "present"))
 
 dev.off()
+
+rm(desc, f3.DF)
 ```
 
-
-### Figure 3
-Fix labels
+## Figure 4
+Prep dataframe
 ```{r}
-DF.viz <- 
-  DF.l.full %>%
+f4.DF <- DF.l.full %>%
+  
+  # apply inclusion criteria
   filter(inc == 1,
-         inc.awa == 1) %>% 
-  mutate(trial = factor(trial,
-                        levels = c("happy",
-                                   "neutr",
-                                   "fil.1",
-                                   "fil.4")),
-         trial = recode(trial,
-                        fil.1 = "filler 1",
-                        happy = "happy",
-                        neutr = "neutral",
-                        fil.4 = "filler 2"),
-         condition = factor(condition,
-                            levels = c("mimicry",
-                                       "directd",
-                                       "pentask")),
-         condition = recode(condition,
-                            directd = "voluntary facial action",
-                            mimicry = "facial mimicry",
-                            pentask = "pen-in-mouth"),
-         image = recode(image,
-                        absentt = "positive stimuli absent",
-                        present = "positive stimuli present")
-         )
+         inc.awa == 1)
 ```
 
+Descriptives
 ```{r}
-tmp <- DF.viz %>% 
+desc1 <- f4.DF %>% 
   group_by(trial, condition, image) %>% 
   summarise(m = round(mean(happiness),
                       2),
             sd = round(sd(happiness),
                        2))
 
-tmp2 <- DF.viz %>% 
+desc2 <- f4.DF %>% 
   group_by(condition, image) %>%
   summarise(n = length(unique(ResponseId)))
 
-tmp3 <- full_join(tmp, tmp2)
-  
-png(filename = "figures/Figure3.png", 
-       units = "in", 
-       width = 7, 
-       height = 6.5, 
-       res = 300)
+desc <- full_join(desc1, desc2)
 
-ggplot(DF.viz, 
+rm(desc1, desc2)
+```
+
+Make Figure
+```{r}
+png(filename = "figures/Figure4.png", 
+    units = "in", 
+    width = 7, 
+    height = 6.5, 
+    res = 300)
+
+ggplot(f4.DF, 
        aes(x = trial, 
            y = happiness)) +
   # split plot by image and condition
@@ -504,7 +490,7 @@ ggplot(DF.viz,
                fun = "mean") +
   
   # add task-specific M's and SDs
-  geom_text(data = tmp3,
+  geom_text(data = desc,
             aes(label = paste0("M = ", m,
                                "\n",
                                "SD = ", sd)),
@@ -513,7 +499,7 @@ ggplot(DF.viz,
             vjust = 2) +
   
   # add condition-specific ns
-  geom_text(data = tmp3,
+  geom_text(data = desc,
             aes(label = paste0("n = ", n)),
             x = 2.5,
             y = Inf,
