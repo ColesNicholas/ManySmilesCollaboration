@@ -542,7 +542,7 @@ anova(models[["secondary"]][["body.aware"]])
 
 ### Exploratory Analyses
 #### Primary analyses excluding anxious participants
-Fiilter data, fit model, inspect results
+Filter data, fit model, inspect results
 ```{r}
 # filter data
 DF.inc.no.anx <- DF.l.inc %>% 
