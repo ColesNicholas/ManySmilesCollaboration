@@ -323,7 +323,7 @@ DF.l %>%
 
 #### Moderator analyses
 ##### Quality
-###### Adherence to instructions
+###### Compliance with instructions
 ```{r}
 # fit model
 models[["secondary"]][["quality.rating"]] <-
