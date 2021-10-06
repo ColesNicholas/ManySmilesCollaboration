@@ -244,39 +244,6 @@ emmeans(models[["secondary"]][["alt.exp"]],
         adjust = "none")
 ```
 
-#### Liking reports
-Fit model and inspect results
-```{r}
-# fit model
-models[["secondary"]][["liking"]] <-
-  lmer(tsk ~ trial * condition +
-         (1 | lab) +
-         (1 | ResponseId),
-       data = DF.l.fil)
-
-# inspect results
-anova(models[["secondary"]][["liking"]])
-
-joint_tests(models[["secondary"]][["liking"]], 
-            by = "condition",
-            lmerTest.limit = 3008)
-
-emmeans(models[["secondary"]][["liking"]], 
-        pairwise ~ trial | condition,
-        adjust = "none")
-
-# descriptives
-DF.l.fil %>% 
-  group_by(condition, trial) %>% 
-  summarise(m = mean(happiness),
-            sd = sd(happiness))
-
-DF.l.fil %>% 
-  group_by(condition, image, trial) %>% 
-  summarise(m = mean(happiness),
-            sd = sd(happiness))
-```
-
 #### Effect of facial feedback on anxiety and anger
 Anxiety: fit model and inspect results
 ```{r}
@@ -513,6 +480,7 @@ rm(tmp)
 ```
 
 ##### Awareness
+Test whether awareness moderates facial feedback effects
 ```{r}
 # fit model
 models[["secondary"]][["awareness"]] <- 
@@ -525,6 +493,23 @@ models[["secondary"]][["awareness"]] <-
 # inspect results
 anova(models[["secondary"]][["awareness"]])
 ```
+
+Test whether certain facial feedback tasks lead to higher levels of awareness than others
+```{r}
+# fit model
+models[["secondary"]][["awareness.diff"]] <-
+  lmer(awareness ~ condition + image + 
+         (1 | lab),
+       data = DF.w)
+
+# inspect results
+anova(models[["secondary"]][["awareness.diff"]])
+
+emmeans(models[["secondary"]][["awareness.diff"]], 
+        pairwise ~ condition,
+        adjust = "none")
+```
+
 
 ##### Body awareness
 ```{r}
@@ -541,6 +526,39 @@ anova(models[["secondary"]][["body.aware"]])
 ```
 
 ### Exploratory Analyses
+#### Liking reports
+Fit model and inspect results
+```{r}
+# fit model
+models[["exploratory"]][["liking"]] <-
+  lmer(tsk ~ trial * condition +
+         (1 | lab) +
+         (1 | ResponseId),
+       data = DF.l.fil)
+
+# inspect results
+anova(models[["exploratory"]][["liking"]])
+
+joint_tests(models[["exploratory"]][["liking"]], 
+            by = "condition",
+            lmerTest.limit = 3008)
+
+emmeans(models[["exploratory"]][["liking"]], 
+        pairwise ~ trial | condition,
+        adjust = "none")
+
+# descriptives
+DF.l.fil %>% 
+  group_by(condition, trial) %>% 
+  summarise(m = mean(happiness),
+            sd = sd(happiness))
+
+DF.l.fil %>% 
+  group_by(condition, image, trial) %>% 
+  summarise(m = mean(happiness),
+            sd = sd(happiness))
+```
+
 #### Primary analyses excluding anxious participants
 Filter data, fit model, inspect results
 ```{r}
