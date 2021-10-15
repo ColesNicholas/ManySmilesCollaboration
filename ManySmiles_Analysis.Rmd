@@ -73,15 +73,16 @@ desc.2 <- DF.w %>%
   summarise(n = n())
 
 desc = full_join(desc.1, desc.2, by = 'country')
-#
-            n.inc = nrow(.[!is.na(.$inc) & 
-                          !is.na(.$inc.awa) &
-                          .$inc == 1 &
-                          .$inc.awa == 1, ]))
-            ) %>% View()
 
-inc.att, inc.fol, inc.mat, inc.dev, inc.awa, inc.dis, inc
+rm(desc.1, desc.2)
 
+desc %>% 
+  mutate_at(vars(contains("inc")),
+            funs(paste0(round((. * 100),
+                              0),
+                        "%")
+                 )
+            ) %>% write.csv("tmp.csv")
 ```
 
 

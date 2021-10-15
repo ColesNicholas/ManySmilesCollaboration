@@ -438,6 +438,13 @@ DF <- DF %>%
                           stop = 3))
 ```
 
+Simplify gender coding by collapsing across infrequently used categories
+```{r}
+DF[!is.na(DF$indiv_gend_var) &
+     DF$indiv_gend_var > 2, ]$indiv_gend_var = 3
+```
+
+
 ## Create long-format dataframe
 ```{r}
 DF.l <- DF %>%
