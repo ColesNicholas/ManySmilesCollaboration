@@ -54,6 +54,37 @@ DF.l <- readRDS("data/DF.l.rds")
 DF.l.inc <- readRDS("data/DF.l.inc.rds")
 ```
 
+## Descriptives table
+```{r}
+desc.1 <- DF.w %>% 
+  group_by(country) %>% 
+  summarise(n = n(),
+            inc.att = mean(inc.att),
+            inc.fol = mean(inc.fol),
+            inc.mat = mean(inc.mat),
+            inc.dev = mean(inc.dev),
+            inc.awa = sum(inc.awa, na.rm = T) / n(),
+            inc.dis = sum(inc.dis, na.rm = T) / n())
+
+desc.2 <- DF.w %>% 
+  filter(inc == 1,
+         inc.awa == 1) %>% 
+  group_by(country) %>% 
+  summarise(n = n())
+
+desc = full_join(desc.1, desc.2, by = 'country')
+#
+            n.inc = nrow(.[!is.na(.$inc) & 
+                          !is.na(.$inc.awa) &
+                          .$inc == 1 &
+                          .$inc.awa == 1, ]))
+            ) %>% View()
+
+inc.att, inc.fol, inc.mat, inc.dev, inc.awa, inc.dis, inc
+
+```
+
+
 ## Participant descriptives
 ```{r}
 # n participants
