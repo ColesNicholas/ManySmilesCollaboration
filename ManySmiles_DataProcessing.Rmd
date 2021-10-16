@@ -582,8 +582,3 @@ DF.w %>%
   summarise(n = length(unique(ResponseId))) %>% 
   write.csv("data/country.n.csv")
 ```
-
-
-```{r}
-# end of code
-```

@@ -1,0 +1,154 @@
+---
+title: 'Data Visualization Code for the Many Smiles Collaboration'
+editor_options:
+  chunk_output_type: console
+---
+## Setup R environment
+```{r message = FALSE, results = "hide"}
+# clear environment
+rm(list = ls())
+
+# install (if necessary) and load packages
+  # function written by stevenworthington 
+  Ipak <- function(pkg){
+      new.pkg <- pkg[!(pkg %in% installed.packages()[, 'Package'])]
+      
+      if (length(new.pkg)) 
+          install.packages(new.pkg, dependencies = TRUE)
+      
+      sapply(pkg, require, character.only = TRUE)
+  }
+
+  # vector of necessary packages
+  packages <- c('tidyverse', 'kableExtra')
+  
+  # using vector of packages, call ipak function
+  Ipak(packages)
+  
+  # delete vestigial
+  rm(packages, Ipak)
+
+# turn scientific notation off
+options(scipen = 999)
+```
+
+## Open data
+```{r}
+DF.w <- readRDS("data/DF.w.rds")
+```
+
+## Demographic table
+Calculate descriptives
+```{r}
+# descriptives for full sample 
+desc.1 <- DF.w %>% 
+  group_by(country) %>% 
+  summarise(t.n = n(),
+            t.m.age = mean(indiv_agee_var,
+                         na.rm = T),
+            t.sd.age = sd(indiv_agee_var,
+                        na.rm = T),
+            t.women = sum(indiv_gend_var == 1, na.rm = T) / n(),
+            t.men = sum(indiv_gend_var == 2, na.rm = T) / n(),
+            t.other = sum(indiv_gend_var == 3, na.rm = T) / n(),
+            
+            # inclusion criteria pass rate
+            inc.dev = mean(inc.dev),
+            inc.att = mean(inc.att),
+            inc.fol = mean(inc.fol),
+            inc.mat = mean(inc.mat),
+            inc.dis = sum(inc.dis, na.rm = T) / n(),
+            inc.awa = sum(inc.awa, na.rm = T) / n()
+            )
+
+# descriptives for subset that met inclusion criteria 
+desc.2 <- DF.w %>% 
+  filter(inc == 1,
+         inc.awa == 1) %>% 
+  group_by(country) %>% 
+  summarise(i.n = n(),
+            i.m.age = mean(indiv_agee_var,
+                         na.rm = T),
+            i.sd.age = sd(indiv_agee_var,
+                        na.rm = T),
+            i.women = sum(indiv_gend_var == 1, na.rm = T) / n(),
+            i.men = sum(indiv_gend_var == 2, na.rm = T) / n(),
+            i.other = sum(indiv_gend_var == 3, na.rm = T) / n()
+            )
+
+# merge descriptives
+desc = full_join(desc.1, desc.2, by = 'country')
+rm(desc.1, desc.2)
+```
+
+clean table
+```{r}
+desc <- desc %>% 
+  # round values
+  mutate_if(is.numeric,
+            funs(round(x = .,
+                       digits = 2)
+                  )
+            ) %>% 
+  
+  # create age text
+  mutate(t.m.age = paste0(t.m.age, 
+                          " (", t.sd.age, ")"),
+         i.m.age = paste0(i.m.age,
+                          " (", i.m.age, ")")
+         ) %>% 
+  
+  # create gender text
+  mutate(t.women = paste0(t.women, "; ",
+                          t.men, "; ",
+                          t.other),
+         i.women = paste0(i.women, "; ",
+                          i.men, "; ",
+                          i.other)) %>% 
+
+  # delete vestigial
+  select(-c(t.sd.age, t.men, t.other, 
+            i.sd.age, i.men, i.other))
+```
+
+Create kable
+```{r}
+kbl(desc,
+    col.names = c("country",
+                  "n",
+                  "age M(SD)",
+                  "proportion of women; men; other",
+                  "device",
+                  "attention",
+                  "follow",
+                  "match",
+                  "distraction",
+                  "awareness",
+                  "n",
+                  "age M(SD)",
+                  "proportion of women; men; other")) %>% 
+  add_header_above(c(" " = 1,
+                     "total sample" = 3,
+                     "inclusion criteria pass rate" = 6,
+                     "inclusion sample" = 3)) %>% 
+  kable_paper()
+
+
+
+
+  d,
+  caption = "Table S1. Study 1-3 ANOVA table output from linear mixed effects-models of happiness and anger reports. F-values are from ANOVAs with Satterthwaite method degrees of freedom.",
+  col.names = c("Emotion Report",
+                "Parameter",
+                "Study 1",
+                "Study 2",
+                "Study 3",
+                )
+) %>%
+  collapse_rows(1, "top") %>%
+  add_footnote(notation = "none",
+               escape = F,
+               "* p < .05; ** p < .01; *** p < .001") %>%
+  kable_paper()
+```
+

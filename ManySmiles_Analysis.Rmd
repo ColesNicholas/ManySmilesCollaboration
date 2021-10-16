@@ -56,33 +56,76 @@ DF.l.inc <- readRDS("data/DF.l.inc.rds")
 
 ## Descriptives table
 ```{r}
+# descriptives for full sample 
 desc.1 <- DF.w %>% 
   group_by(country) %>% 
-  summarise(n = n(),
+  summarise(t.n = n(),
+            t.m.age = mean(indiv_agee_var,
+                         na.rm = T),
+            t.sd.age = sd(indiv_agee_var,
+                        na.rm = T),
+            t.women = sum(indiv_gend_var == 1, na.rm = T) / n(),
+            t.men = sum(indiv_gend_var == 2, na.rm = T) / n(),
+            t.other = sum(indiv_gend_var == 3, na.rm = T) / n(),
+            
+            # inclusion criteria pass rate
             inc.att = mean(inc.att),
             inc.fol = mean(inc.fol),
             inc.mat = mean(inc.mat),
             inc.dev = mean(inc.dev),
             inc.awa = sum(inc.awa, na.rm = T) / n(),
-            inc.dis = sum(inc.dis, na.rm = T) / n())
+            inc.dis = sum(inc.dis, na.rm = T) / n()
+            )
 
+# descriptives for subset that met inclusion criteria 
 desc.2 <- DF.w %>% 
   filter(inc == 1,
          inc.awa == 1) %>% 
   group_by(country) %>% 
-  summarise(n = n())
+  summarise(i.n = n(),
+            i.m.age = mean(indiv_agee_var,
+                         na.rm = T),
+            i.sd.age = sd(indiv_agee_var,
+                        na.rm = T),
+            i.women = sum(indiv_gend_var == 1, na.rm = T) / n(),
+            i.men = sum(indiv_gend_var == 2, na.rm = T) / n(),
+            i.other = sum(indiv_gend_var == 3, na.rm = T) / n()
+            )
 
+# merge descriptives
 desc = full_join(desc.1, desc.2, by = 'country')
-
 rm(desc.1, desc.2)
 
-desc %>% 
-  mutate_at(vars(contains("inc")),
-            funs(paste0(round((. * 100),
-                              0),
-                        "%")
-                 )
-            ) %>% write.csv("tmp.csv")
+# clean table
+desc <- desc %>% 
+  # round values
+  mutate_if(is.numeric,
+            funs(round(x = .,
+                       digits = 2)
+                  )
+            ) %>% 
+  
+  # create age text
+  mutate(t.m.age = paste0(t.m.age, 
+                          " (", t.sd.age, ")"),
+         i.m.age = paste0(i.m.age,
+                          " (", i.m.age, ")")
+         ) %>% 
+  
+  # create gender text
+  mutate(t.women = paste0(t.women, "; ",
+                          t.men, "; ",
+                          t.other),
+         i.women = paste0(i.women, "; ",
+                          i.men, "; ",
+                          i.other)) %>% 
+
+  # delete vestigial
+  select(-c(t.sd.age, t.men, t.other, 
+            i.sd.age, i.men, i.other))
+
+# export table
+write.csv(desc, "desc.csv")
 ```
 
 
