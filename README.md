@@ -8,13 +8,23 @@
 ## ManySmilesAnalysis.Rmd:
 - Main data analysis script
 
+## ManySmiles_PresentationFigures.Rmd:
+- Temporary code used to prep presentations
+
+## ManySmiles_ManySmiles_Tables.Rmd
+- Temporary code used to prep tables
+
+## ManySmiles_Visualizations.Rmd:
+- Temporary code used to prep visualizations
+
 ## ManySmiles_RR7_Prereg.docx
 - Copy of the pre-registration form
 
 ## data folder
-- codebooks: contains codebooks for the raw Qualtrics data and the coder data files. (This folder will eventually contain codebooks for the processed datasets.)
+- codebooks: contains codebooks for the raw Qualtrics data, coder data files, and processed datasets (except DF.w.rds, which will likely be deleted in the future).
 - coding: Each lab had two coders code the extent to which participants were (a) aware of the true purpose of the study and (b) distracted. This folder contains seperate .xlsx files for each coder in each lab. 
 - raw: contains the raw Qualtrics data
+- processed: contains processed data sets.
 - DF.l.rds: processed data containing one row for each of the happy and neutral trials that participants completed (i.e., two rows per participant). This is the dataframe that is used for most analyses.
 - DF.l.full.rds: processed data containing one row for each of the happy, neutral, filler 1, and filler 2 trials that participants completed (i.e., four rows per participant). This dataframe is used for one of the exploratory analyses requested by reviewers.
 - DF.w.rds: processed data containing one row for each participant.
