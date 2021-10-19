@@ -148,15 +148,25 @@ DF.l$lab %>%
 table(DF.l$condition) %>% prop.table()
 table(DF.l$condition, DF.l$image) %>% prop.table()
 
-# gender
-table(DF.l$indiv_gend_var) %>% prop.table()
-
-# age
-DF.w %>% 
-  summarise(m = mean(indiv_agee_var,
-                     na.rm = T),
-            sd = sd(indiv_agee_var,
-                    na.rm = T))
+# inclusion criteria
+DF.w %>%
+  summarise(n = n(),
+            m.age = mean(indiv_agee_var,
+                         na.rm = T),
+            sd.age = sd(indiv_agee_var,
+                        na.rm = T),
+            g.women = sum(indiv_gend_var == 1, na.rm = T) / n(),
+            g.men = sum(indiv_gend_var == 2, na.rm = T) / n(),
+            g.other = sum(indiv_gend_var == 3, na.rm = T) / n(),
+            
+            # inclusion criteria pass rate
+            inc.dev = mean(inc.dev),
+            inc.att = mean(inc.att),
+            inc.fol = mean(inc.fol),
+            inc.mat = mean(inc.mat),
+            inc.dis = sum(inc.dis, na.rm = T) / n(),
+            inc.awa = sum(inc.awa, na.rm = T) / n()
+            )
 ```
 
 ## Analyses
@@ -190,6 +200,10 @@ joint_tests(models[["primary"]][["prereg.min"]],
             lmerTest.limit = 9999)
 
 # descriptives
+emmeans(models[["primary"]][["prereg.min"]],
+        pairwise ~ image | condition,
+        adjust = "none")
+
 DF.l.inc %>% 
   group_by(condition, trial) %>% 
   summarise(m = mean(happiness),

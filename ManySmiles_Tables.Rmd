@@ -1,10 +1,14 @@
 ---
-title: 'Data Visualization Code for the Many Smiles Collaboration'
 editor_options:
   chunk_output_type: console
+output:
+  html_document:
+    df_print: paged
 ---
+```{r echo = F, message = F, warning = F, results = "hide"}
+######################
 ## Setup R environment
-```{r message = FALSE, results = "hide"}
+######################
 # clear environment
 rm(list = ls())
 
@@ -30,16 +34,15 @@ rm(list = ls())
 
 # turn scientific notation off
 options(scipen = 999)
-```
 
+######################
 ## Open data
-```{r}
+######################
 DF.w <- readRDS("data/DF.w.rds")
-```
 
-## Demographic table
-Calculate descriptives
-```{r}
+######################
+## Calculate descriptives
+######################
 # descriptives for full sample 
 desc.1 <- DF.w %>% 
   group_by(country) %>% 
@@ -79,10 +82,10 @@ desc.2 <- DF.w %>%
 # merge descriptives
 desc = full_join(desc.1, desc.2, by = 'country')
 rm(desc.1, desc.2)
-```
 
-clean table
-```{r}
+######################
+## Clean table
+######################
 desc <- desc %>% 
   # round values
   mutate_if(is.numeric,
@@ -95,7 +98,7 @@ desc <- desc %>%
   mutate(t.m.age = paste0(t.m.age, 
                           " (", t.sd.age, ")"),
          i.m.age = paste0(i.m.age,
-                          " (", i.m.age, ")")
+                          " (", i.sd.age, ")")
          ) %>% 
   
   # create gender text
@@ -111,44 +114,25 @@ desc <- desc %>%
             i.sd.age, i.men, i.other))
 ```
 
-Create kable
-```{r}
+```{r echo = F, fig.cap= "Estimated distribution of population effects from random-effects meta-analysis of Paluck et. al's dataset (heavy red curve) and estimated density of studies' point estimates (thin black curve)."}
 kbl(desc,
     col.names = c("country",
                   "n",
                   "age M(SD)",
                   "proportion of women; men; other",
-                  "device",
-                  "attention",
-                  "follow",
-                  "match",
-                  "distraction",
-                  "awareness",
+                  "used approved device",
+                  "passed attention check",
+                  "reported compliance",
+                  "reported pose similarity",
+                  "rated as not distracted",
+                  "rated as unaware",
                   "n",
                   "age M(SD)",
-                  "proportion of women; men; other")) %>% 
+                  "proportion of women; men; other"),
+    caption = "Country-specific sample characteristics. For both the total sample and primary analysis sample, the table denotes the number of participants, age mean and standard deviation, and the proportion of participants who identified as women, men, or some other response option (e.g., gender non-conforming). The table also denotes the proportion of the total sample that (a) completed the study on an approved device, (b) passed all attention checks, (c) reporting at least some compliance with the task, (d) reported that the posed expression was at least somewhat similar to an actor succesfull completing the task, (e) was rated as not distracted, and (f) was reported as completely unaware of the purpose of the study.") %>% 
   add_header_above(c(" " = 1,
                      "total sample" = 3,
                      "inclusion criteria pass rate" = 6,
-                     "inclusion sample" = 3)) %>% 
-  kable_paper()
-
-
-
-
-  d,
-  caption = "Table S1. Study 1-3 ANOVA table output from linear mixed effects-models of happiness and anger reports. F-values are from ANOVAs with Satterthwaite method degrees of freedom.",
-  col.names = c("Emotion Report",
-                "Parameter",
-                "Study 1",
-                "Study 2",
-                "Study 3",
-                )
-) %>%
-  collapse_rows(1, "top") %>%
-  add_footnote(notation = "none",
-               escape = F,
-               "* p < .05; ** p < .01; *** p < .001") %>%
+                     "primary analysis sample" = 3)) %>% 
   kable_paper()
 ```
-
