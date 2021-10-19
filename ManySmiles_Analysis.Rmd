@@ -48,10 +48,10 @@ theme_set(theme_classic() +
 
 ## Open data
 ```{r}
-DF.w <- readRDS("data/DF.w.rds")
-DF.l.full <- readRDS("data/DF.l.full.rds")
-DF.l <- readRDS("data/DF.l.rds")
-DF.l.inc <- readRDS("data/DF.l.inc.rds")
+DF.w <- readRDS("data/processed/DF.w.rds")
+DF.l.full <- readRDS("data/processed/DF.l.full.rds")
+DF.l <- readRDS("data/processed/DF.l.rds")
+DF.l.inc <- readRDS("data/processed/DF.l.inc.rds")
 ```
 
 ## Descriptives table
