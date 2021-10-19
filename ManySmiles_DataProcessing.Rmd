@@ -569,10 +569,10 @@ DF.l.inc <- DF.l %>%
 ```
 
 ```{r}
-write_rds(DF.w, "data/DF.w.rds")
-write_rds(DF.l.full, "data/DF.l.full.rds")
-write_rds(DF.l, "data/DF.l.rds")
-write_rds(DF.l.inc, "data/DF.l.inc.rds")
+write_rds(DF.w, "data/processed/DF.w.rds")
+write_rds(DF.l.full, "data/processed/DF.l.full.rds")
+write_rds(DF.l, "data/processed/DF.l.rds")
+write_rds(DF.l.inc, "data/processed/DF.l.inc.rds")
 ```
 
 ```{r eval = FALSE}
