@@ -204,15 +204,13 @@ emmeans(models[["primary"]][["prereg.min"]],
         pairwise ~ image | condition,
         adjust = "none")
 
-DF.l.inc %>% 
-  group_by(condition, trial) %>% 
-  summarise(m = mean(happiness),
-            sd = sd(happiness))
+emmeans(models[["primary"]][["prereg.min"]],
+        pairwise ~ trial | condition,
+        adjust = "none")
 
-DF.l.inc %>% 
-  group_by(condition, image, trial) %>% 
-  summarise(m = mean(happiness),
-            sd = sd(happiness))
+emmeans(models[["primary"]][["prereg.min"]],
+        pairwise ~ trial | image |condition,
+        adjust = "none")
 ```
 
 Simple comparison of facial mimicry and voluntary facial action task
@@ -395,29 +393,43 @@ anova(models[["secondary"]][["quality.rating"]])
 
 Look at facial feedback task-specific moderating effects
 ```{r}
-lmer(happiness ~ 
-         trial * image * qulty_rate_var.c +
-         (1 | lab) + 
-         (1 | ResponseId),
-       data = DF.l,
-     subset = condition == "mimicry") %>% 
-  anova()
+# mimicry
+m <- lmer(happiness ~ 
+            trial * image * qulty_rate_var.c +
+            (1 | lab) + 
+            (1 | ResponseId),
+          data = DF.l,
+          subset = condition == "mimicry")
 
-lmer(happiness ~ 
-         trial * image * qulty_rate_var.c +
-         (1 | lab) + 
-         (1 | ResponseId),
-       data = DF.l,
-     subset = condition == "directd") %>% 
-  anova()
+m %>% anova()
+m %>% summary()
+m %>% confint()
 
-lmer(happiness ~ 
-         trial * image * qulty_rate_var.c +
-         (1 | lab) + 
-         (1 | ResponseId),
-       data = DF.l,
-     subset = condition == "pentask") %>% 
-  anova()
+# voluntary facial action task
+m <- lmer(happiness ~ 
+            trial * image * qulty_rate_var.c +
+            (1 | lab) + 
+            (1 | ResponseId),
+          data = DF.l,
+          subset = condition == "directd")
+
+m %>% anova()
+m %>% summary()
+m %>% confint()
+
+# pen-in-mouth
+m <- lmer(happiness ~ 
+            trial * image * qulty_rate_var.c +
+            (1 | lab) + 
+            (1 | ResponseId),
+          data = DF.l,
+          subset = condition == "pentask") 
+
+m %>% anova()
+m %>% summary()
+m %>% confint()
+
+rm(m)
 ```
 
 Examine how much adherence is required for a significant facial feedback effect
@@ -458,29 +470,43 @@ anova(models[["secondary"]][["simil.rating"]])
 
 Look at facial feedback task-specific moderating effects
 ```{r}
-lmer(happiness ~ 
-         trial * image * qulty_smlr_var.c +
-         (1 | lab) + 
-         (1 | ResponseId),
-       data = DF.l,
-     subset = condition == "mimicry") %>% 
-  anova()
+# mimicry
+m <- lmer(happiness ~ 
+            trial * image * qulty_smlr_var.c +
+            (1 | lab) + 
+            (1 | ResponseId),
+          data = DF.l,
+          subset = condition == "mimicry")
 
-lmer(happiness ~ 
-         trial * image * qulty_smlr_var.c +
-         (1 | lab) + 
-         (1 | ResponseId),
-       data = DF.l,
-     subset = condition == "directd") %>% 
-  anova()
+m %>% anova()
+m %>% summary()
+m %>% confint()
 
-lmer(happiness ~ 
-         trial * image * qulty_smlr_var.c +
-         (1 | lab) + 
-         (1 | ResponseId),
-       data = DF.l,
-     subset = condition == "pentask") %>% 
-  anova()
+# voluntary facial action task
+m <- lmer(happiness ~ 
+            trial * image * qulty_smlr_var.c +
+            (1 | lab) + 
+            (1 | ResponseId),
+          data = DF.l,
+          subset = condition == "directd")
+
+m %>% anova()
+m %>% summary()
+m %>% confint()
+
+# pen-in-mouth
+m <- lmer(happiness ~ 
+            trial * image * qulty_smlr_var.c +
+            (1 | lab) + 
+            (1 | ResponseId),
+          data = DF.l,
+          subset = condition == "pentask")
+
+m %>% anova()
+m %>% summary()
+m %>% confint()
+
+rm(m)
 ```
 
 Examine how much similarity is required for a significant facial feedback effect
@@ -521,29 +547,43 @@ anova(models[["secondary"]][["feel.rating"]])
 
 Look at facial feedback task-specific moderating effects
 ```{r}
-lmer(happiness ~ 
-         trial * image * qulty_feel_var.c +
-         (1 | lab) + 
-         (1 | ResponseId),
-       data = DF.l,
-     subset = condition == "mimicry") %>% 
-  anova()
+# facial mimicry
+m <- lmer(happiness ~ 
+            trial * image * qulty_feel_var.c +
+            (1 | lab) + 
+            (1 | ResponseId),
+          data = DF.l,
+          subset = condition == "mimicry")
 
-lmer(happiness ~ 
-         trial * image * qulty_feel_var.c +
-         (1 | lab) + 
-         (1 | ResponseId),
-       data = DF.l,
-     subset = condition == "directd") %>% 
-  anova()
+m %>% anova()
+m %>% summary()
+m %>% confint()
 
-lmer(happiness ~ 
-         trial * image * qulty_feel_var.c +
-         (1 | lab) + 
-         (1 | ResponseId),
-       data = DF.l,
-     subset = condition == "pentask") %>% 
-  anova()
+# voluntary facial action task
+m <- lmer(happiness ~ 
+            trial * image * qulty_feel_var.c +
+            (1 | lab) + 
+            (1 | ResponseId),
+          data = DF.l,
+          subset = condition == "directd")
+
+m %>% anova()
+m %>% summary()
+m %>% confint()
+
+# pen-in-mouth
+m <- lmer(happiness ~ 
+            trial * image * qulty_feel_var.c +
+            (1 | lab) + 
+            (1 | ResponseId),
+          data = DF.l,
+          subset = condition == "pentask")
+
+m %>% anova()
+m %>% summary()
+m %>% confint()
+
+rm(m)
 ```
 
 Examine how much genuineness is required for a significant facial feedback effect
