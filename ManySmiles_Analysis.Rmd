@@ -50,6 +50,7 @@ theme_set(theme_classic() +
 ```{r}
 DF.w <- readRDS("data/processed/DF.w.rds")
 DF.l.full <- readRDS("data/processed/DF.l.full.rds")
+DF.l.full.inc <- readRDS("data/processed/DF.l.full.inc.rds")
 DF.l <- readRDS("data/processed/DF.l.rds")
 DF.l.inc <- readRDS("data/processed/DF.l.inc.rds")
 ```
@@ -279,13 +280,6 @@ joint_tests(models[["primary"]][["full.sens"]],
 
 ### Secondary analyses
 #### Do Participants Report Experiencing More Happiness During the Smiling vs. Filler Trials?
-Prepare data by choosing the full dataset (which contains filler trials) and applying inclusion criteria.
-```{r}
-DF.l.fil <- DF.l.full %>% 
-  filter(inc == 1,
-         inc.awa == 1)
-```
-
 Fit model and inspect results
 ```{r}
 # fit model
@@ -293,7 +287,7 @@ models[["secondary"]][["alt.exp"]] <-
   lmer(happiness ~ trial * condition * image +
          (1 | lab) +
          (1 | ResponseId),
-       data = DF.l.fil)
+       data = DF.l.full.inc)
 
 # inspect results
 anova(models[["secondary"]][["alt.exp"]])
@@ -311,17 +305,15 @@ emmeans(models[["secondary"]][["alt.exp"]],
 Note: this code is all set to not evaluate because it is computationally intensive. It also removes the image absent condition because (a) it helps the model converge in a reasonably quick amount of time and (b) this condition is not relevant for the inferences (see manuscript for more information).  
 ```{r eval = F}
 # prepare data
-DF.l.fil <- DF.l.full %>% 
-  filter(inc == 1,
-         inc.awa == 1,
-         image == "absentt")
+tmp <- DF.l.full.inc %>% 
+  filter(image == "absentt")
 
 # fit model
 models[["secondary"]][["alt.exp"]] <-
   lmer(happiness ~ trial * condition +
          (1 + trial * condition | lab) +
          (1 | ResponseId),
-       data = DF.l.fil)
+       data = tmp)
 
 # inspect results
 anova(models[["secondary"]][["alt.exp"]])
@@ -329,6 +321,8 @@ anova(models[["secondary"]][["alt.exp"]])
 emmeans(models[["secondary"]][["alt.exp"]], 
         pairwise ~ trial | condition,
         adjust = "none")
+
+rm(tmp)
 ```
 
 #### Effect of facial feedback on anxiety and anger
@@ -675,7 +669,7 @@ models[["exploratory"]][["liking"]] <-
   lmer(tsk ~ trial * condition +
          (1 | lab) +
          (1 | ResponseId),
-       data = DF.l.fil)
+       data = DF.l.full.inc)
 
 # inspect results
 anova(models[["exploratory"]][["liking"]])
@@ -689,12 +683,12 @@ emmeans(models[["exploratory"]][["liking"]],
         adjust = "none")
 
 # descriptives
-DF.l.fil %>% 
+DF.l.full.inc %>% 
   group_by(condition, trial) %>% 
   summarise(m = mean(happiness),
             sd = sd(happiness))
 
-DF.l.fil %>% 
+DF.l.full.inc %>% 
   group_by(condition, image, trial) %>% 
   summarise(m = mean(happiness),
             sd = sd(happiness))
