@@ -33,9 +33,10 @@ Each lab had two coders code the extent to which participants were (a) aware of 
 - MSC_data_raw.csv: raw Qualtrics data
 
 ### processed
-- DF.l.full.rds: processed data containing one row for each of the happy, neutral, filler 1, and filler 2 trials that participants completed (i.e., four rows per participant). This dataframe is used for one of the exploratory analyses requested by reviewers.
+- DF.l.full.rds: processed data containing one row for each of the happy, neutral, filler 1, and filler 2 trials that participants completed (i.e., four rows per participant). This dataframe is used for visualizations.
+- DF.l.full.inc.rds: same as DF.l.full.rds, but excludes participants who did not meet the primary analysis inclusion criteria. This dataset is used for one of the sensitivity analyses requested by reviewers.
 - DF.l.rds: processed data containing one row for each of the happy and neutral trials that participants completed (i.e., two rows per participant). This is the dataframe that is used for most analyses.
-- DF.l.inc.rds: processed data containing one row for each of the happy and neutral trials that participants completed (i.e., two rows per participant). Importantly, this dataset excludes participants who did not meet primary analysis inclusion criteria.
+- DF.l.inc.rds: same as DF.l.full.rds, but excludes participants who did not meet the primary analysis inclusion criteria.
 - DF.w.rds: processed data containing one row for each participant.
 
 ## output folder
