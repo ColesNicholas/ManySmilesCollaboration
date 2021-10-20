@@ -637,6 +637,18 @@ anova(models[["secondary"]][["awareness.diff"]])
 emmeans(models[["secondary"]][["awareness.diff"]], 
         pairwise ~ condition,
         adjust = "none")
+
+DF.w %>% 
+  group_by(condition) %>% 
+  summarise(m.awa = mean(awareness,
+                         na.rm = T),
+            sd.awa = sd(awareness,
+                        na.rm = T))
+
+# lmer(happiness ~ trial * awareness * qulty_feel_var.c +
+#          (1 | ResponseId) +
+#          (1 | lab),
+#        data = DF.l)
 ```
 
 

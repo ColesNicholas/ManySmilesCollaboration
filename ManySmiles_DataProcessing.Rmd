@@ -517,7 +517,8 @@ DF.l <- DF.l %>%
     tsk, # liking ratings
     
     # inclusion criteria
-    awareness, distraction, inc.att : inc,
+    awareness, awareness.c,
+    distraction, inc.att : inc,
     
     # quality items
     qulty_rate_var, qulty_feel_var, qulty_smlr_var,
@@ -551,26 +552,35 @@ rm(DF)
 ```
 
 ### Create dataframes used for analyses
+Datasets containing pose and filler trials
 ```{r}
-# dataset containing filler and pose trials
+# all participants
 DF.l.full <- DF.l
 
-# dataset containing only pose trials
+# only participants who meet strict inclusion criteria
+DF.l.full.inc <- DF.l %>% 
+  filter(inc == 1,
+         inc.awa == 1)
+```
+
+Datasets containing only happy and neutral pose trials
+```{r}
 DF.l <- DF.l %>%
   filter(trial == "happy" |
          trial == "neutr") %>% 
   mutate(trial = factor(trial)) # relevel trial factor
 
-# dataset containing pose trials only from participants 
-# who meet strict inclusion criteria
+# dataset containing only participants who meet all inclusion criteria
 DF.l.inc <- DF.l %>% 
   filter(inc == 1,
          inc.awa == 1)
 ```
 
+
 ```{r}
 write_rds(DF.w, "data/processed/DF.w.rds")
 write_rds(DF.l.full, "data/processed/DF.l.full.rds")
+write_rds(DF.l.full.inc, "data/processed/DF.l.full.rds")
 write_rds(DF.l, "data/processed/DF.l.rds")
 write_rds(DF.l.inc, "data/processed/DF.l.inc.rds")
 ```
