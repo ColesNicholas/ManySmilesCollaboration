@@ -608,7 +608,7 @@ Test whether awareness moderates facial feedback effects
 # fit model
 models[["secondary"]][["awareness"]] <- 
   lmer(happiness ~ 
-         trial * condition * image *  awareness +
+         trial * condition * image *  awareness.c +
          (1 | lab) +
          (1 | ResponseId),
        data = DF.l)
@@ -638,11 +638,6 @@ DF.w %>%
                          na.rm = T),
             sd.awa = sd(awareness,
                         na.rm = T))
-
-# lmer(happiness ~ trial * awareness * qulty_feel_var.c +
-#          (1 | ResponseId) +
-#          (1 | lab),
-#        data = DF.l)
 ```
 
 
