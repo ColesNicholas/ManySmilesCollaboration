@@ -46,10 +46,10 @@ theme_set(theme_classic() +
 
 ## Open data
 ```{r}
-DF.w <- readRDS("data/DF.w.rds")
-DF.l.full <- readRDS("data/DF.l.full.rds")
-DF.l <- readRDS("data/DF.l.rds")
-DF.l.inc <- readRDS("data/DF.l.inc.rds")
+DF.w <- readRDS("data/processed/DF.w.rds")
+DF.l.full <- readRDS("data/processed/DF.l.full.rds")
+DF.l <- readRDS("data/processed/DF.l.rds")
+DF.l.inc <- readRDS("data/processed/DF.l.inc.rds")
 ```
 
 ## Recode labels
@@ -188,7 +188,7 @@ rm(desc1, desc2)
 
 Plot
 ```{r}
-png(filename = "figures/Figure2.png", 
+png(filename = "output/figures/Figure2.png", 
     units = "in", 
     width = 7, 
     height = 6.5, 
@@ -298,7 +298,7 @@ rm(desc1, desc2)
 
 Plot
 ```{r}
-png(filename = "figures/Figure2b.png", 
+png(filename = "output/figures/Figure2b.png", 
     units = "in", 
     width = 7, 
     height = 6.5, 
@@ -380,7 +380,7 @@ desc <- f3.DF %>%
 Plot
 ```{r}
 png(
-  filename = "figures/Figure3.png",
+  filename = "output/figures/Figure3.png",
   units = "in",
   width = 7,
   height = 6.5,
@@ -456,7 +456,7 @@ rm(desc1, desc2)
 
 Make Figure
 ```{r}
-png(filename = "figures/Figure4.png", 
+png(filename = "output/figures/Figure4.png", 
     units = "in", 
     width = 7, 
     height = 6.5, 
@@ -609,7 +609,7 @@ f5.DF[f5.DF$condition == "pen-in-mouth" &
 
 Plot figure
 ```{r}
-png(filename = "figures/Figure5.png", 
+png(filename = "output/figures/Figure5.png", 
     units = "in", 
     height = 7, 
     width = 6.5, 
@@ -817,7 +817,7 @@ meta.DF <- meta.DF %>%
   mutate(Q = NA,
          Q.p = NA,
          i2 = NA,
-         t2 = NA)
+         t = NA)
 
 meta.DF <- rbind(
   meta.DF,
@@ -834,7 +834,7 @@ meta.DF <- rbind(
     Q = round(meta.m$QE, 2),
     Q.p = round(meta.m$QEp, 3),
     i2 = round(meta.m$I2, 0),
-    t2 = round(meta.m$tau2, 2)
+    t = round(sqrt(meta.m$tau2), 2)
   ),
   
   # directd
@@ -849,7 +849,7 @@ meta.DF <- rbind(
     Q = round(meta.d$QE, 2),
     Q.p = round(meta.d$QEp, 3),
     i2 = round(meta.d$I2, 0),
-    t2 = round(meta.d$tau2, 2)
+    t = round(sqrt(meta.d$tau2), 2)
   ),
   
   # pentask
@@ -864,7 +864,7 @@ meta.DF <- rbind(
     Q = round(meta.p$QE, 2),
     Q.p = round(meta.p$QEp, 3),
     i2 = round(meta.p$I2, 0),
-    t2 = round(meta.p$tau2, 2)
+    t = round(sqrt(meta.p$tau2), 2)
   ),
   
   # image
@@ -879,11 +879,33 @@ meta.DF <- rbind(
     Q = round(meta.i$QE, 2),
     Q.p = round(meta.i$QEp, 3),
     i2 = round(meta.i$I2, 0),
-    t2 = round(meta.i$tau2, 2)
+    t = round(sqrt(meta.i$tau2), 2)
   )
 ) %>% as.data.frame()
 
 rm(meta.d, meta.m, meta.p, meta.i)
+```
+
+Add in country-specific sample sizes
+```{r}
+# calculate country-specific sample sizes
+n <- DF.l.inc %>% 
+  filter(trial == "happy") %>% 
+  group_by(country) %>% 
+  summarise(n = n())
+
+# merge w/ meta.DF
+meta.DF <- full_join(meta.DF, n, by = "country") %>%
+  mutate(country = as.character(country)) %>% 
+  rowwise() %>% 
+  mutate(country = if_else(country == "Overall",
+                           country,
+                           paste0(country, 
+                                  " (n = ", n, ")"))) %>% 
+  ungroup() %>% 
+  mutate(country = as.factor(country))
+
+rm(n)
 ```
 
 Format dataset
@@ -896,6 +918,7 @@ meta.DF <- meta.DF %>%
                       false = 0),
     
     # order effect sizes by whether they are (a) overall vs. country-specific and then (b) size of the effect
+    # country = factor(country),
     country = fct_reorder(country,
                           desc(d)),
     country = fct_reorder(country,
@@ -918,7 +941,7 @@ meta.DF <- meta.DF %>%
 
 Create forest plot
 ```{r}
-png(filename = "figures/Figure6.png", 
+png(filename = "output/figures/Figure6.png", 
     units = "in", 
     width = 9, 
     height = 5.07, 
@@ -963,12 +986,12 @@ ggplot(data = meta.DF,
                                round(ub, 2), "]",
                                "<br>",
                                " Q = ", Q, ", 
-                               <i>p</i> =", round(as.numeric(Q.p), 2),
+                               <i>p</i> = ", round(as.numeric(Q.p), 2),
                                "<br>",
                                " <i>I<sup>2</sup></i> = ", i2, "%", 
-                               ", <i>T<sup>2</sup></i> = ", t2),
+                               ", <i>T</i> = ", t),
                 x = 1.18,
-                y = .8),
+                y = .70),
             size = 1.8,
             label.colour = NA,
             fill = NA,

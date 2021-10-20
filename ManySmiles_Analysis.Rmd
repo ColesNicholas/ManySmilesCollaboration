@@ -608,13 +608,18 @@ Test whether awareness moderates facial feedback effects
 # fit model
 models[["secondary"]][["awareness"]] <- 
   lmer(happiness ~ 
-         trial * condition * image *  awareness.c +
+         trial * condition * image * awareness.c +
          (1 | lab) +
          (1 | ResponseId),
        data = DF.l)
 
 # inspect results
-anova(models[["secondary"]][["awareness"]])
+models[["secondary"]][["awareness"]] %>% anova()
+
+models[["secondary"]][["awareness"]] %>% summary()
+
+models[["secondary"]][["awareness"]] %>% confint()
+
 ```
 
 Test whether certain facial feedback tasks lead to higher levels of awareness than others
@@ -652,7 +657,10 @@ models[["secondary"]][["body.aware"]] <-
        data = DF.l)
 
 # inspect results
-anova(models[["secondary"]][["body.aware"]])
+models[["secondary"]][["body.aware"]] %>% anova()
+models[["secondary"]][["body.aware"]] %>% summary()
+models[["secondary"]][["body.aware"]] %>% confint()
+
 ```
 
 ### Exploratory Analyses
