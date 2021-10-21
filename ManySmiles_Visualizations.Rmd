@@ -554,7 +554,7 @@ f5.DF <- DF.l %>%
          mod = recode(mod,
                       qulty_rate_var = "compliance",
                       qulty_feel_var = "genuineness",
-                      qulty_smlr_var = "similarity",))
+                      qulty_smlr_var = "similarity"))
 ```
 
 For each task, specify modal response and when estimated effect of facial feedback became significant.
