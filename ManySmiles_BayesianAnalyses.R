@@ -17,7 +17,8 @@ options(scipen = 999)
 options(contrasts = c('contr.sum', 'contr.poly'))
 
 # load packages
-XXX = c('tidyverse', 'ggplot2', 'lme4', 'lmerTest', 'emmeans', 'BayesFactor')
+library('tidyverse')
+library('BayesFactor')
 
 lapply(XXX, FUN = function(x) {
   do.call("require", list(x)) 
@@ -28,22 +29,6 @@ DF.l.inc <- readRDS("data/processed/DF.l.inc.rds") %>% #  old DF.1.rds
   mutate(ResponseId = ResponseId %>% 
            as.numeric() %>% 
            as.factor())
-#DF.2 <- readRDS("DF2.rds")
-#DF.3 <- readRDS("DF3.rds")
-
-# Subject ID recoding
-## Note NC: trying to remove this because it shouldn't be necessary?
-# ID.1 = factor(rep(1:(nrow(DF.1)/2), each = 2))
-# DF.1$ID = ID.1
-# 
-# ID.2 = factor(rep(1:(nrow(DF.2)/4), each = 4))
-# DF.2$ID = ID.2
-# 
-# ID.3 = factor(rep(1:(nrow(DF.3)/2), each = 2))
-# DF.3$ID = ID.3
-# 
-# DF.1$ResponseId <-droplevels(DF.1$ResponseId )
-# str(DF.1$ResponseId)
 
 # -----------------
 # Bayesian analyses
