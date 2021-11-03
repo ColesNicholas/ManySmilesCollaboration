@@ -267,15 +267,15 @@ anova(models[["primary"]][["full.sens"]])
 
 joint_tests(models[["primary"]][["full.sens"]], 
             by = "condition",
-            lmerTest.limit = c)
+            lmerTest.limit = 9999)
 
-joint_tests(models[["primary"]][["full.sens"]],
-            by = "condition",
-            lmerTest.limit = full.sens)
+emmeans(models[["primary"]][["full.sens"]],
+        pairwise ~ trial | condition,
+        adjust = "none")
 
 joint_tests(models[["primary"]][["full.sens"]], 
             by = c("image", "condition"),
-            lmerTest.limit = full.sens)
+            lmerTest.limit = 9999)
 ```
 
 ### Secondary analyses
@@ -297,6 +297,28 @@ joint_tests(models[["secondary"]][["alt.exp"]],
             lmerTest.limit = 9999)
 
 emmeans(models[["secondary"]][["alt.exp"]], 
+        pairwise ~ trial | condition | image,
+        adjust = "none")
+```
+
+##### Sensitivity analysis without exclusions
+Fit model and inspect results
+```{r}
+# fit model
+models[["secondary"]][["alt.exp.no.inc"]] <-
+  lmer(happiness ~ trial * condition * image +
+         (1 | lab) +
+         (1 | ResponseId),
+       data = DF.l.full)
+
+# inspect results
+anova(models[["secondary"]][["alt.exp.no.inc"]])
+
+joint_tests(models[["secondary"]][["alt.exp.no.inc"]], 
+            by = "image",
+            lmerTest.limit = 9999)
+
+emmeans(models[["secondary"]][["alt.exp.no.inc"]], 
         pairwise ~ trial | condition | image,
         adjust = "none")
 ```
