@@ -20,20 +20,20 @@ options(contrasts = c('contr.sum', 'contr.poly'))
 library('tidyverse')
 library('BayesFactor')
 
-lapply(XXX, FUN = function(x) {
-  do.call("require", list(x)) 
-})
-
 # load data
-DF.l.inc <- readRDS("data/processed/DF.l.inc.rds") %>% #  old DF.1.rds 
+DF.l.inc <- readRDS("data/processed/DF.l.inc.rds") %>% 
   mutate(ResponseId = ResponseId %>% 
            as.numeric() %>% 
            as.factor())
 
 # -----------------
-# Bayesian analyses
+# Nicholas Bayesian analyses
 # -----------------
-# note: The default prior of lmBF on fixed effects is "medium", which is equal to rscale ? 1/2
+tmp <- anovaBF(happiness ~ trial * condition * image + 
+                 ResponseId + lab, 
+               iterations = 100,
+               whichRandom = c("ResponseId", "lab"), 
+               data = DF.l.inc)
 
 #################
 # 1  #
@@ -141,13 +141,13 @@ lmbf5.0 <- lmBF(happiness ~ image + trial +
 lmbf6.1 <- lmBF(happiness ~ trial + 
                   ResponseId + lab, 
                 whichRandom = c("ResponseId", "lab"), 
-                data = subset(DF.1, 
+                data = subset(DF.l.inc, 
                               condition == "mimicry" & image == "present"))
 
 lmbf6.0 <- lmBF(happiness ~ 1 + 
                   ResponseId + lab, 
                 whichRandom = c("ResponseId", "lab"), 
-                data = subset(DF.1, 
+                data = subset(DF.l.inc, 
                               condition == "mimicry" & image == "present"))
 
 (bf6 <- lmbf6.1/lmbf6.0 )# 810.0388 ?6.03%
@@ -161,19 +161,19 @@ lmbf6.0 <- lmBF(happiness ~ 1 +
 lmbf7.1 <- lmBF(happiness ~ trial + 
                   ResponseId + lab, 
                 whichRandom = c("ResponseId", "lab"), 
-                data = subset(DF.1, 
+                data = subset(DF.l.inc, 
                               condition == "mimicry" & image == "absentt"))
 
 lmbf7.0 <- lmBF(happiness ~ 1 +  
                   ResponseId + lab, 
                 whichRandom = c("ResponseId", "lab"), 
-                data = subset(DF.1, condition == "mimicry" & image == "absentt"))
+                data = subset(DF.l.inc, 
+                              condition == "mimicry" & image == "absentt"))
 
 (bf7 <-lmbf7.1/lmbf7.0) # 20327954614
 
 
 # Directed
-
 #################
 # 8  #
 #################
@@ -182,13 +182,13 @@ lmbf7.0 <- lmBF(happiness ~ 1 +
 lmbf8.1 <- lmBF(happiness ~ image +
                   ResponseId + lab, 
                 whichRandom = c("ResponseId", "lab"), 
-                data = subset(DF.1, 
+                data = subset(DF.l.inc, 
                               condition == "directd"))
 
 lmbf8.0 <- lmBF(happiness ~ 1 + 
                   ResponseId + lab, 
                 whichRandom = c("ResponseId", "lab"), 
-                data = subset(DF.1, 
+                data = subset(DF.l.inc, 
                               condition == "directd"))
 
 (bf8 <- lmbf8.1/lmbf8.0 )# 113.534
@@ -201,13 +201,13 @@ lmbf8.0 <- lmBF(happiness ~ 1 +
 lmbf9.1 <- lmBF(happiness ~ trial +
                   ResponseId + lab, 
                 whichRandom = c("ResponseId", "lab"), 
-                data = subset(DF.1, 
+                data = subset(DF.l.inc, 
                               condition == "directd"))
 
 lmbf9.0 <- lmBF(happiness ~ 1 + 
                   ResponseId + lab, 
                 whichRandom = c("ResponseId", "lab"), 
-                data = subset(DF.1, 
+                data = subset(DF.l.inc, 
                               condition == "directd"))
 
 (bf9 <- lmbf9.1/lmbf9.0) # 1871459923 ?3.33%
@@ -221,13 +221,13 @@ lmbf9.0 <- lmBF(happiness ~ 1 +
 lmbf10.1 <-  lmBF(happiness ~ image + trial + image : trial +  
                     ResponseId + lab, 
                   whichRandom = c("ResponseId", "lab"), 
-                  data = subset(DF.1, 
+                  data = subset(DF.l.inc, 
                                 condition == "directd"))
 
 lmbf10.0 <-  lmBF(happiness ~ image + trial +  
                     ResponseId + lab, 
                   whichRandom = c("ResponseId", "lab"), 
-                  data = subset(DF.1, 
+                  data = subset(DF.l.inc, 
                                 condition == "directd"))
 
 (bf10 <- lmbf10.1/lmbf10.0) # 0.1043555 ?3.37%
@@ -242,13 +242,13 @@ lmbf10.0 <-  lmBF(happiness ~ image + trial +
 lmbf11.1 <- lmBF(happiness ~ trial +
                    ResponseId + lab, 
                  whichRandom = c("ResponseId", "lab"), 
-                 data = subset(DF.1, 
+                 data = subset(DF.l.inc, 
                                condition == "directd" & image == "present"))
 
 lmbf11.0 <- lmBF(happiness ~ 1 +
                    ResponseId + lab, 
                  whichRandom = c("ResponseId", "lab"), 
-                 data = subset(DF.1, 
+                 data = subset(DF.l.inc, 
                                condition == "directd" & image == "present"))
 
 (bf11 <- lmbf11.1/lmbf11.0) # 895.4185 ?1.21%
@@ -262,13 +262,13 @@ lmbf11.0 <- lmBF(happiness ~ 1 +
 lmbf12.1 <- lmBF(happiness ~ trial + 
                    ResponseId + lab, 
                  whichRandom = c("ResponseId", "lab"), 
-                 data = subset(DF.1, 
+                 data = subset(DF.l.inc, 
                                condition == "directd" & image == "absentt"))
 
 lmbf12.0 <- lmBF(happiness ~ 1 + 
                    ResponseId + lab, 
                  whichRandom = c("ResponseId", "lab"), 
-                 data = subset(DF.1, 
+                 data = subset(DF.l.inc, 
                                condition == "directd" & image == "absentt"))
 
 (bf12 <- lmbf12.1/lmbf12.0) # 578494.6 ?3.33%
@@ -283,17 +283,18 @@ lmbf12.0 <- lmBF(happiness ~ 1 +
 lmbf13.1 <- lmBF(happiness ~ image +
                    ResponseId + lab, 
                  whichRandom = c("ResponseId", "lab"), 
-                 data = subset(DF.1, 
+                 data = subset(DF.l.inc, 
                                condition == "pentask"))
 
 lmbf13.0 <- lmBF(happiness ~ 1 +
                    ResponseId + lab, 
                  whichRandom = c("ResponseId", "lab"), 
-                 data = subset(DF.1, 
+                 data = subset(DF.l.inc, 
                                condition == "pentask"))
 
 (bf13 <- lmbf13.1/lmbf13.0 )# 0.2058395
 1/bf13
+
 #################
 # 14  #
 #################
@@ -302,13 +303,13 @@ lmbf13.0 <- lmBF(happiness ~ 1 +
 lmbf14.1 <- lmBF(happiness ~ trial +
                    ResponseId + lab, 
                  whichRandom = c("ResponseId", "lab"), 
-                 data = subset(DF.1, 
+                 data = subset(DF.l.inc, 
                                condition == "pentask"))
 
 lmbf14.0 <- lmBF(happiness ~ 1 +
                    ResponseId + lab, 
                  whichRandom = c("ResponseId", "lab"), 
-                 data = subset(DF.1, 
+                 data = subset(DF.l.inc, 
                                condition == "pentask"))
 
 (bf14 <- lmbf14.1/lmbf14.0) # 1.001017
@@ -321,13 +322,13 @@ lmbf14.0 <- lmBF(happiness ~ 1 +
 lmbf15.1 <-  lmBF(happiness ~ image + trial + image : trial +
                     ResponseId + lab, 
                   whichRandom = c("ResponseId", "lab"), 
-                  data = subset(DF.1, 
+                  data = subset(DF.l.inc, 
                                 condition == "pentask"))
 
 lmbf15.0 <-  lmBF(happiness ~ image + trial + 
                     ResponseId + lab, 
                   whichRandom = c("ResponseId", "lab"), 
-                  data = subset(DF.1, 
+                  data = subset(DF.l.inc, 
                                 condition == "pentask"))
 
 (bf15 <- lmbf15.1/lmbf15.0) #  0.196295 
@@ -341,13 +342,13 @@ lmbf15.0 <-  lmBF(happiness ~ image + trial +
 lmbf16.1 <- lmBF(happiness ~ trial +  
                    ResponseId + lab, 
                  whichRandom = c("ResponseId", "lab"), 
-                 data = subset(DF.1, 
+                 data = subset(DF.l.inc, 
                                condition == "pentask" & image == "present"))
 
 lmb16.0 <- lmBF(happiness ~ 1 + 
                   ResponseId + lab, 
                 whichRandom = c("ResponseId", "lab"), 
-                data = subset(DF.1, 
+                data = subset(DF.l.inc, 
                               condition == "pentask" & image == "present"))
 
 (bf16 <- lmbf16.1/lmb16.0) # 2.5
@@ -360,13 +361,13 @@ lmb16.0 <- lmBF(happiness ~ 1 +
 lmbf17.1 <- lmBF(happiness ~ trial +
                    ResponseId + lab, 
                  whichRandom = c("ResponseId", "lab"), 
-                 data = subset(DF.1, 
+                 data = subset(DF.l.inc, 
                                condition == "pentask" & image == "absentt"))
 
 lmbf17.0 <- lmBF(happiness ~ 1 +
                    ResponseId + lab, 
                  whichRandom = c("ResponseId", "lab"), 
-                 data = subset(DF.1, 
+                 data = subset(DF.l.inc, 
                                condition == "pentask" & image == "absentt"))
 
 (bf17 <- lmbf17.1/lmbf17.0) # 
@@ -414,6 +415,7 @@ lmbf19.0 <- lmBF(happiness ~ condition + trial +
                  whichRandom = c("ResponseId", "lab"), 
                  data = subset(DF.l.full.inc, 
                                image == "absentt"))
+
 (bf19 <- lmbf19.1/lmbf19.0) # 120809211773 ±7.75%
 
 output = c(bf1@bayesFactor$bf, bf2@bayesFactor$bf, 
@@ -490,7 +492,7 @@ ttestBF(x = DF2.2.1.w$fil.1,
         paired = T, 
         rscale = 0.5) # 3.542896 ±0%%
 
-DF2.2.2 <- subset(DF.2, 
+DF2.2.2 <- subset(DF.l.full.inc, 
                   image == "absentt" & 
                     condition == "directd" & 
                     (trial == "fil.4" | trial == "happy"))
@@ -508,7 +510,7 @@ ttestBF(x = DF2.2.2.w$fil.4,
         paired = T, 
         rscale = 0.5) # 7.412424 ±0%
 
-DF2.3.1 <- subset(DF.2, 
+DF2.3.1 <- subset(DF.l.full.inc, 
                   image == "absentt" & 
                     condition == "pentask" & 
                     (trial == "fil.1" | trial == "happy"))
@@ -528,7 +530,7 @@ ttestBF(x = DF2.3.1.w$fil.1,
 
 summary(DF2.3.1.w)
 
-DF2.3.2 <- subset(DF.2, 
+DF2.3.2 <- subset(DF.l.full.inc, 
                   image == "absentt" & 
                     condition == "pentask" & 
                     (trial == "fil.4" | trial == "happy"))
