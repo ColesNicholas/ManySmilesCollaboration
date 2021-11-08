@@ -746,3 +746,56 @@ joint_tests(models[["exploratory"]][["no.anx"]],
 # delete vistigial 
 rm(DF.inc.no.anx)
 ```
+
+### Temp
+Participants do indeed find the pen-in-mouth task more difficult.
+Usually the happy pose task is more difficult.
+But, in pen-in-mouth, the neutral task is more difficult.
+This is problematic because difficulty <-> happiness. This confound could cause us to erroneously observe a pen-in-mouth effect.
+When controlling for difficulty, we do not find a pen-in-mouth effect.
+```{r}
+DF.l.inc %>% 
+  group_by(condition) %>% 
+  summarise(m = mean(dq1),
+            sd = sd(dq1))
+
+DF.l.inc %>% 
+  group_by(condition, trial) %>% 
+  summarise(m = mean(dq1),
+            sd = sd(dq1))
+
+DF.l.full.inc %>% 
+  group_by(condition, trial) %>% 
+  summarise(m = mean(dq1),
+            sd = sd(dq1))
+
+tmp <- lmer(dq1 ~ trial * condition + 
+       (1 | ResponseId) +
+       (1 | lab),
+     data = DF.l.inc)
+
+anova(tmp)
+
+joint_tests(tmp, 
+            by = "condition",
+            lmerTest.limit = 9999)
+
+emmeans(tmp,
+        pairwise ~ trial | condition,
+        adjust = "none")
+
+emmeans(tmp,
+        pairwise ~ trial | image |condition,
+        adjust = "none")
+
+tmp2 <- lmer(happiness ~ trial * image * condition * dq1 + 
+       (1 | ResponseId) +
+       (1 | lab),
+     data = DF.l.inc)
+
+joint_tests(tmp2, 
+            by = "condition",
+            lmerTest.limit = 9999)
+
+```
+

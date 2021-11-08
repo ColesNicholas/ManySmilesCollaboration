@@ -26,15 +26,6 @@ DF.l.inc <- readRDS("data/processed/DF.l.inc.rds") %>%
            as.numeric() %>% 
            as.factor())
 
-# -----------------
-# Nicholas Bayesian analyses
-# -----------------
-tmp <- anovaBF(happiness ~ trial * condition * image + 
-                 ResponseId + lab, 
-               iterations = 100,
-               whichRandom = c("ResponseId", "lab"), 
-               data = DF.l.inc)
-
 #################
 # 1  #
 #################
@@ -279,7 +270,6 @@ lmbf12.0 <- lmBF(happiness ~ 1 +
 # 13  #
 #################
 # Effect of Stimuli Presence
-
 lmbf13.1 <- lmBF(happiness ~ image +
                    ResponseId + lab, 
                  whichRandom = c("ResponseId", "lab"), 
@@ -318,7 +308,6 @@ lmbf14.0 <- lmBF(happiness ~ 1 +
 # 15  #
 #################
 # Interaction between Pose and Stimuli Presence
-
 lmbf15.1 <-  lmBF(happiness ~ image + trial + image : trial +
                     ResponseId + lab, 
                   whichRandom = c("ResponseId", "lab"), 
