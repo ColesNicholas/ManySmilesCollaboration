@@ -248,6 +248,15 @@ joint_tests(models[["primary"]][["prereg.max"]],
 joint_tests(models[["primary"]][["prereg.max"]], 
             by = c("image", "condition"),
             lmerTest.limit = 9999)
+
+# descriptives
+emmeans(models[["primary"]][["prereg.max"]],
+        pairwise ~ trial | condition,
+        adjust = "none")
+
+emmeans(models[["primary"]][["prereg.max"]],
+        pairwise ~ trial | image | condition,
+        adjust = "none")
 ```
 
 #### Sensitivity analysis with full dataset
@@ -717,6 +726,23 @@ DF.l.full.inc %>%
   group_by(condition, image, trial) %>% 
   summarise(m = mean(happiness),
             sd = sd(happiness))
+```
+
+#### Model with anxiety
+```{r}
+m <- 
+  lmer(happiness ~ trial * image * condition + anxiety +
+         (1 | ResponseId) +
+         (1 | lab),
+       data = DF.l.inc)
+    
+summary(m) 
+confint(m)
+anova(m)
+
+joint_tests(m,
+            by = "condition",
+            lmerTest.limit = 9999)
 ```
 
 #### Primary analyses excluding anxious participants

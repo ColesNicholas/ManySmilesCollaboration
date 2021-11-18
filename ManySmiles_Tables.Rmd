@@ -24,7 +24,7 @@ rm(list = ls())
   }
 
   # vector of necessary packages
-  packages <- c('tidyverse', 'kableExtra')
+  packages <- c('tidyverse', 'kableExtra' 'sjPlot')
   
   # using vector of packages, call ipak function
   Ipak(packages)
@@ -38,10 +38,13 @@ options(scipen = 999)
 ######################
 ## Open data
 ######################
-DF.w <- readRDS("data/DF.w.rds")
+DF.w <- readRDS("data/processed/DF.w.rds")
+DF.l <- readRDS("data/processed/DF.l.rds")
+```
 
+```{r echo = F, message = F, warning = F, results = "hide"}
 ######################
-## Calculate descriptives
+## Table 1: Calculate descriptives
 ######################
 # descriptives for full sample 
 desc.1 <- DF.w %>% 
@@ -114,7 +117,7 @@ desc <- desc %>%
             i.sd.age, i.men, i.other))
 ```
 
-```{r echo = F, fig.cap= "Estimated distribution of population effects from random-effects meta-analysis of Paluck et. al's dataset (heavy red curve) and estimated density of studies' point estimates (thin black curve)."}
+```{r echo = F}
 kbl(desc,
     col.names = c("country",
                   "n",
@@ -136,3 +139,18 @@ kbl(desc,
                      "primary analysis sample" = 3)) %>% 
   kable_paper()
 ```
+
+
+```{r echo = F, message = F, warning = F, results = "hide"}
+# Table 2: regression output
+
+# fit model
+m <-
+  lmer(happiness ~ trial * condition * image +
+         (1 | ResponseId) +
+         (1 | lab),
+       data = DF.l)
+
+tab_model(m)
+```
+
