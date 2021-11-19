@@ -134,6 +134,117 @@ DF.l.inc <- DF.l.inc %>%
          )
 ```
 
+
+## tmp Figure 4 re-do
+```{r}
+library("ggpubr")
+
+f4.DF <- DF.l.full %>%
+  
+  # apply inclusion criteria
+  filter(inc == 1,
+         inc.awa == 1) %>% 
+  mutate(trial = recode(trial,
+                        `filler 1` = "filler",
+                        `filler 2` = "filler"))
+
+ggline(f4.DF, 
+       x = "trial", y = "happiness", 
+       add = c("mean_se"),
+       facet.by = "condition",
+       color = "image",
+       palette = "jco")
+```
+
+
+## tmp Figure 5 re-do
+```{r}
+X <- f5.DF %>% 
+  group_split(mod)
+
+f1 <- ggplot(as.data.frame(X[[1]]), 
+       aes(x = value, 
+           y = happ.diff)) +
+  facet_grid(cols = vars(condition)) +
+  geom_rect(aes(xmin = sig.cross - .25,
+                xmax = 7.25,
+                ymin = -6,
+                ymax = 6),
+            fill = "lightgreen",
+            alpha = .01) +
+  geom_rect(aes(xmin = mode - .25,
+                xmax = mode + .25,
+                ymin = -6,
+                ymax = 6),
+            fill = NA,
+            colour = "black") + 
+  geom_jitter(width = .1, 
+              alpha = .2,
+              colour = "dark grey") +
+  geom_smooth(method = 'lm') +
+  xlab("Self-reported compliance") +
+  ylab("Change in self-reported happiness") + 
+  scale_x_continuous(
+    breaks = c(1, 3, 5, 7))
+
+f2 <- ggplot(as.data.frame(X[[2]]), 
+       aes(x = value, 
+           y = happ.diff)) +
+  facet_grid(cols = vars(condition)) +
+  geom_rect(aes(xmin = sig.cross - .25,
+                xmax = 7.25,
+                ymin = -6,
+                ymax = 6),
+            fill = "lightgreen",
+            alpha = .01) +
+  geom_rect(aes(xmin = mode - .25,
+                xmax = mode + .25,
+                ymin = -6,
+                ymax = 6),
+            fill = NA,
+            colour = "black") + 
+  geom_jitter(width = .1, 
+              alpha = .2,
+              colour = "dark grey") +
+  geom_smooth(method = 'lm') +
+  xlab("Self-reported genuineness") +
+  ylab("Change in self-reported happiness") + 
+  scale_x_continuous(
+    breaks = c(1, 3, 5, 7))
+
+f3 <- ggplot(as.data.frame(X[[3]]), 
+       aes(x = value, 
+           y = happ.diff)) +
+  facet_grid(cols = vars(condition)) +
+  geom_rect(aes(xmin = sig.cross - .25,
+                xmax = 7.25,
+                ymin = -6,
+                ymax = 6),
+            fill = "lightgreen",
+            alpha = .01) +
+  geom_rect(aes(xmin = mode - .25,
+                xmax = mode + .25,
+                ymin = -6,
+                ymax = 6),
+            fill = NA,
+            colour = "black") + 
+  geom_jitter(width = .1, 
+              alpha = .2,
+              colour = "dark grey") +
+  geom_smooth(method = 'lm') +
+  xlab("Self-reported similarity") +
+  ylab("Change in self-reported happiness") + 
+  scale_x_continuous(
+    breaks = c(1, 3, 5, 7))
+
+library("gridExtra")
+
+grid.arrange(f1, f2, f3,
+             nrow = 3)
+
+```
+
+
 ## Figure 2
 Prep dataframe
 ```{r}
@@ -487,7 +598,7 @@ ggplot(f4.DF,
   
   stat_summary(colour = "#3366FF", 
                size = .5,
-               fun = "mean") +
+               fun = "mean_se") +
   
   # add task-specific M's and SDs
   geom_text(data = desc,
