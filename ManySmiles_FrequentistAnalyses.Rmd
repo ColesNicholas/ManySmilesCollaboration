@@ -202,6 +202,14 @@ joint_tests(models[["primary"]][["prereg.min"]],
 
 # descriptives
 emmeans(models[["primary"]][["prereg.min"]],
+        pairwise ~ trial,
+        adjust = "none")
+
+emmeans(models[["primary"]][["prereg.min"]],
+        pairwise ~ image,
+        adjust = "none")
+
+emmeans(models[["primary"]][["prereg.min"]],
         pairwise ~ image | condition,
         adjust = "none")
 
@@ -772,3 +780,9 @@ joint_tests(models[["exploratory"]][["no.anx"]],
 # delete vistigial 
 rm(DF.inc.no.anx)
 ```
+
+```{r}
+tmp <- DF.l.inc %>% 
+  pivot_longer(cols = c(trial, image))
+```
+
