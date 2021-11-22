@@ -24,7 +24,7 @@ rm(list = ls())
   }
 
   # vector of necessary packages
-  packages <- c('tidyverse', 'kableExtra' 'sjPlot')
+  packages <- c('tidyverse', 'kableExtra')
   
   # using vector of packages, call ipak function
   Ipak(packages)
@@ -132,25 +132,10 @@ kbl(desc,
                   "n",
                   "age M(SD)",
                   "proportion of women; men; other"),
-    caption = "Country-specific sample characteristics. For both the total sample and primary analysis sample, the table denotes the number of participants, age mean and standard deviation, and the proportion of participants who identified as women, men, or some other response option (e.g., gender non-conforming). The table also denotes the proportion of the total sample that (a) completed the study on an approved device, (b) passed all attention checks, (c) reporting at least some compliance with the task, (d) reported that the posed expression was at least somewhat similar to an actor succesfull completing the task, (e) was rated as not distracted, and (f) was reported as completely unaware of the purpose of the study.") %>% 
+    caption = "Country-specific sample characteristics. For both the total sample and primary analysis sample, the table denotes the number of participants, age mean and standard deviation, and the proportion of participants who identified as a woman, man, or  other response option (e.g., gender non-conforming). The table also denotes the proportion of the total sample that (a) completed the study on an approved device, (b) passed all attention checks, (c) reported at least some compliance with the task, (d) reported that the posed expression was at least somewhat similar to an actor succesfully completing the task, (e) was rated as not distracted, and (f) was rated as completely unaware of the purpose of the study.") %>% 
   add_header_above(c(" " = 1,
                      "total sample" = 3,
                      "inclusion criteria pass rate" = 6,
                      "primary analysis sample" = 3)) %>% 
   kable_paper()
 ```
-
-
-```{r echo = F, message = F, warning = F, results = "hide"}
-# Table 2: regression output
-
-# fit model
-m <-
-  lmer(happiness ~ trial * condition * image +
-         (1 | ResponseId) +
-         (1 | lab),
-       data = DF.l)
-
-tab_model(m)
-```
-
