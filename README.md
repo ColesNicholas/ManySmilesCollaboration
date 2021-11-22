@@ -5,8 +5,11 @@
 - Cleans and processes data to create several processed dataframes
 - Exports processed data to the data folder
 
-### ManySmilesAnalysis.Rmd:
-- Main data analysis script
+### ManySmiles_FrequentistAnalyses.Rmd:
+- Frequentist data analysis script
+
+### ManySmiles_BayesianAnalyses.R:
+- Script that performs supplemental Bayesian analyses
 
 ### ManySmiles_PresentationFigures.Rmd:
 - Temporary code used to prep presentations
