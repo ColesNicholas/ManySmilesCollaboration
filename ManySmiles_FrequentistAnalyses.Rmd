@@ -780,9 +780,3 @@ joint_tests(models[["exploratory"]][["no.anx"]],
 # delete vistigial 
 rm(DF.inc.no.anx)
 ```
-
-```{r}
-tmp <- DF.l.inc %>% 
-  pivot_longer(cols = c(trial, image))
-```
-
