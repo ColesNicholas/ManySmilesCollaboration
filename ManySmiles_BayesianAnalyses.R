@@ -359,7 +359,7 @@ lmbf17.0 <- lmBF(happiness ~ 1 +
                  data = subset(DF.l.inc, 
                                condition == "pentask" & image == "absentt"))
 
-(bf17 <- lmbf17.1/lmbf17.0) # 
+1 / (bf17 <- lmbf17.1/lmbf17.0) # 
 
 #################
 # pen-in-mouth with relaxed exclusion criteria  #
