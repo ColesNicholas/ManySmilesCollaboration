@@ -193,12 +193,12 @@ f5.DF <- DF.l %>%
   # relevel factors 
   mutate(mod = factor(mod,
                       levels = c("qulty_rate_var",
-                                 "qulty_feel_var",
-                                 "qulty_smlr_var")),
+                                 "qulty_smlr_var",
+                                 "qulty_feel_var")),
          mod = recode(mod,
                       qulty_rate_var = "compliance",
-                      qulty_feel_var = "genuineness",
-                      qulty_smlr_var = "similarity"))
+                      qulty_smlr_var = "similarity",
+                      qulty_feel_var = "genuineness"))
 ```
 
 For each task, specify modal response and when estimated effect of facial feedback became significant.
@@ -253,7 +253,7 @@ f5.DF[f5.DF$condition == "pen-in-mouth" &
 
 Plot figure
 ```{r}
-png(filename = "output/figures/Figure2.png", 
+png(filename = "output/figures/Figure3.png", 
     units = "in", 
     height = 7, 
     width = 6.5, 
