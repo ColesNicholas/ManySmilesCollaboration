@@ -56,7 +56,7 @@ DF.l.inc <- readRDS("data/processed/DF.l.inc.rds")
 ```
 
 ## Descriptives table
-```{r}
+```{r eval = F}
 # descriptives for full sample 
 desc.1 <- DF.w %>% 
   group_by(country) %>% 
@@ -149,7 +149,7 @@ DF.l$lab %>%
 table(DF.l$condition) %>% prop.table()
 table(DF.l$condition, DF.l$image) %>% prop.table()
 
-# inclusion criteria
+# descriptives
 DF.w %>%
   summarise(n = n(),
             m.age = mean(indiv_agee_var,
@@ -168,6 +168,108 @@ DF.w %>%
             inc.dis = sum(inc.dis, na.rm = T) / n(),
             inc.awa = sum(inc.awa, na.rm = T) / n()
             )
+
+# n participants who met inclusion criteria
+DF.l.inc$ResponseId %>% unique() %>% length()
+```
+
+Compliance, similarity, and genuineness descriptives
+```{r}
+f2.DF <- DF.l %>% 
+  # select relevant variables
+  select(ResponseId, trial, condition, 
+         qulty_rate_var, qulty_feel_var, qulty_smlr_var) %>% 
+  
+  # pivot longer so that there is one row for each moderator
+  pivot_longer(cols = c(qulty_rate_var, 
+                        qulty_smlr_var,
+                        qulty_feel_var),
+               names_to = "qual.ind") %>% 
+  
+  # delete duplicate set of observations in the neutral trial
+  filter(trial == "happy") %>% 
+  
+  # relevel factors 
+  mutate(qual.ind = factor(qual.ind,
+                           levels = c("qulty_rate_var",
+                                      "qulty_feel_var",
+                                      "qulty_smlr_var")),
+         qual.ind = recode(qual.ind,
+                           qulty_rate_var = "compliance",
+                           qulty_feel_var = "genuineness",
+                           qulty_smlr_var = "similarity")
+         )
+```
+
+Get descriptives
+```{r}
+# m and sd for each quality indicator for each condition 
+desc1 <- f2.DF %>% 
+  group_by(condition, qual.ind) %>% 
+  summarise(m = round(mean(value,
+                           na.rm = T),
+                      2),
+            sd = round(sd(value, na.rm = T),
+                       2))
+# n for each quality indicator for each condition
+desc2 <- f2.DF %>% 
+  filter(!is.na(value)) %>% 
+  group_by(condition, qual.ind) %>% 
+  tally()
+# combine
+desc <- full_join(desc1, desc2)
+rm(desc1, desc2)
+```
+
+Plot
+```{r}
+ggplot(f2.DF,
+       aes(x = value)) +
+  
+  # split plot by condition and moderator
+  facet_grid(cols = vars(condition),
+             rows = vars(qual.ind),
+             scales = "free_y") +
+  
+  # plot histogram (as percentage)
+  geom_histogram(aes(y = stat(width*density)),
+                 bins = 7,
+                 fill = "gray60") +
+  
+  # add bin-specific percentage counts to histogram
+  stat_bin(aes(y = stat(width*density),
+               label = 
+                 paste0((round(stat(width*density),
+                               2) * 100),
+                        "%")), 
+           geom = "text",
+           bins = 7,
+           size = 2,
+           vjust = -.21) +
+  
+  # paste descriptive statistics to left of histogram
+  geom_text(data = desc,
+            aes(label = paste0("n = ", n,
+                               "\n",
+                               "M = ", m,
+                               "\n",
+                               "SD = ", sd)),
+            x = -1.25,
+            y = Inf,
+            size = 2,
+            hjust = 0,
+            vjust = 1.25) +
+  
+  # fix scales
+  scale_x_continuous(name = "Self-reported rating",
+                     breaks = c(1, 3, 5, 7),
+                     expand = expand_scale(mult = c(.30, .01))) +
+  scale_y_continuous(expand = expand_scale(mult = c(0, .14)),
+                     name = "Percent",
+                     labels = scales::percent_format())
+
+
+rm(f2.DF, desc)
 ```
 
 ## Analyses
