@@ -21,7 +21,10 @@ library('tidyverse')
 library('BayesFactor')
 
 # load data
-DF.l.inc <- readRDS("data/processed/DF.l.inc.rds") %>% 
+
+setwd("C:\\Users\\marozzi\\Documents\\udelnaya\\sub udelnaya\\fernando\\smiles")
+
+DF.l.inc <- readRDS("DF.l.inc.rds") %>% 
   mutate(ResponseId = ResponseId %>% 
            as.numeric() %>% 
            as.factor())
@@ -32,13 +35,13 @@ DF.l.inc <- readRDS("data/processed/DF.l.inc.rds") %>%
 # Interaction between Facial Movement Task and Stimuli Presence
 lmbf1.1 <- lmBF(happiness ~ condition + image + condition:image + 
                   ResponseId + lab, 
-                whichRandom = c("ResponseId", "lab"), 
+                whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                 data = DF.l.inc)
 
 
 lmbf1.0 <- lmBF(happiness ~ condition + image + 
                   ResponseId + lab, 
-                whichRandom = c("ResponseId", "lab"), 
+                whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                 data = DF.l.inc)
 
 (bf1 <- lmbf1.1/lmbf1.0 ) # inconclusive: 0.8633591 ?15.52%
@@ -51,14 +54,14 @@ lmbf2.1 <- lmBF(happiness ~ condition + image + trial +
                   condition : image + condition : trial + 
                   image : trial + condition : image : trial +  
                   ResponseId + lab, 
-                whichRandom = c("ResponseId", "lab"), 
+                whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                 data = DF.l.inc)
 
 lmbf2.0 <- lmBF(happiness ~ condition + image + trial + 
                   condition : image + condition : trial + 
                   image : trial +  
                   ResponseId + lab, 
-                whichRandom = c("ResponseId", "lab"), 
+                whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                 data = DF.l.inc)
 
 (bf2 <- lmbf2.1/lmbf2.0 )# inconclusive: 1.678069 ?11.69%
@@ -73,13 +76,13 @@ lmbf2.0 <- lmBF(happiness ~ condition + image + trial +
 
 lmbf3.1 <- lmBF(happiness ~ image +  
                   ResponseId + lab,
-                whichRandom = c("ResponseId", "lab"), 
+                whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                 data = subset(DF.l.inc, 
                               condition == "mimicry"))
 
 lmbf3.0 <- lmBF(happiness ~ 1 +
                   ResponseId + lab,
-                whichRandom = c("ResponseId", "lab"), 
+                whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                 data = subset(DF.l.inc, 
                               condition == "mimicry"))
 
@@ -92,13 +95,13 @@ lmbf3.0 <- lmBF(happiness ~ 1 +
 
 lmbf4.1 <- lmBF(happiness ~ trial +  
                   ResponseId + lab,
-                whichRandom = c("ResponseId", "lab"), 
+                whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                 data = subset(DF.l.inc, 
                               condition == "mimicry"))
 
 lmbf4.0 <- lmBF(happiness ~ 1 +  
                   ResponseId + lab,
-                whichRandom = c("ResponseId", "lab"), 
+                whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                 data = subset(DF.l.inc, 
                               condition == "mimicry"))
 
@@ -111,13 +114,13 @@ lmbf4.0 <- lmBF(happiness ~ 1 +
 
 lmbf5.1 <- lmBF(happiness ~ image + trial + image : trial +
                   ResponseId + lab,
-                whichRandom = c("ResponseId", "lab"), 
+                whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                 data = subset(DF.l.inc, 
                               condition == "mimicry"))
 
 lmbf5.0 <- lmBF(happiness ~ image + trial +
                   ResponseId + lab,
-                whichRandom = c("ResponseId", "lab"), 
+                whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                 data = subset(DF.l.inc, 
                               condition == "mimicry"))
 
@@ -131,7 +134,7 @@ lmbf5.0 <- lmBF(happiness ~ image + trial +
 
 lmbf6.1 <- lmBF(happiness ~ trial + 
                   ResponseId + lab, 
-                whichRandom = c("ResponseId", "lab"), 
+                whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                 data = subset(DF.l.inc, 
                               condition == "mimicry" & image == "present"))
 
@@ -151,13 +154,13 @@ lmbf6.0 <- lmBF(happiness ~ 1 +
 
 lmbf7.1 <- lmBF(happiness ~ trial + 
                   ResponseId + lab, 
-                whichRandom = c("ResponseId", "lab"), 
+                whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                 data = subset(DF.l.inc, 
                               condition == "mimicry" & image == "absentt"))
 
 lmbf7.0 <- lmBF(happiness ~ 1 +  
                   ResponseId + lab, 
-                whichRandom = c("ResponseId", "lab"), 
+                whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                 data = subset(DF.l.inc, 
                               condition == "mimicry" & image == "absentt"))
 
@@ -172,13 +175,13 @@ lmbf7.0 <- lmBF(happiness ~ 1 +
 
 lmbf8.1 <- lmBF(happiness ~ image +
                   ResponseId + lab, 
-                whichRandom = c("ResponseId", "lab"), 
+                whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                 data = subset(DF.l.inc, 
                               condition == "directd"))
 
 lmbf8.0 <- lmBF(happiness ~ 1 + 
                   ResponseId + lab, 
-                whichRandom = c("ResponseId", "lab"), 
+                whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                 data = subset(DF.l.inc, 
                               condition == "directd"))
 
@@ -191,13 +194,13 @@ lmbf8.0 <- lmBF(happiness ~ 1 +
 
 lmbf9.1 <- lmBF(happiness ~ trial +
                   ResponseId + lab, 
-                whichRandom = c("ResponseId", "lab"), 
+                whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                 data = subset(DF.l.inc, 
                               condition == "directd"))
 
 lmbf9.0 <- lmBF(happiness ~ 1 + 
                   ResponseId + lab, 
-                whichRandom = c("ResponseId", "lab"), 
+                whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                 data = subset(DF.l.inc, 
                               condition == "directd"))
 
@@ -211,13 +214,13 @@ lmbf9.0 <- lmBF(happiness ~ 1 +
 
 lmbf10.1 <-  lmBF(happiness ~ image + trial + image : trial +  
                     ResponseId + lab, 
-                  whichRandom = c("ResponseId", "lab"), 
+                  whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                   data = subset(DF.l.inc, 
                                 condition == "directd"))
 
 lmbf10.0 <-  lmBF(happiness ~ image + trial +  
                     ResponseId + lab, 
-                  whichRandom = c("ResponseId", "lab"), 
+                  whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                   data = subset(DF.l.inc, 
                                 condition == "directd"))
 
@@ -232,13 +235,13 @@ lmbf10.0 <-  lmBF(happiness ~ image + trial +
 
 lmbf11.1 <- lmBF(happiness ~ trial +
                    ResponseId + lab, 
-                 whichRandom = c("ResponseId", "lab"), 
+                 whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                  data = subset(DF.l.inc, 
                                condition == "directd" & image == "present"))
 
 lmbf11.0 <- lmBF(happiness ~ 1 +
                    ResponseId + lab, 
-                 whichRandom = c("ResponseId", "lab"), 
+                 whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                  data = subset(DF.l.inc, 
                                condition == "directd" & image == "present"))
 
@@ -252,13 +255,13 @@ lmbf11.0 <- lmBF(happiness ~ 1 +
 
 lmbf12.1 <- lmBF(happiness ~ trial + 
                    ResponseId + lab, 
-                 whichRandom = c("ResponseId", "lab"), 
+                 whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                  data = subset(DF.l.inc, 
                                condition == "directd" & image == "absentt"))
 
 lmbf12.0 <- lmBF(happiness ~ 1 + 
                    ResponseId + lab, 
-                 whichRandom = c("ResponseId", "lab"), 
+                 whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                  data = subset(DF.l.inc, 
                                condition == "directd" & image == "absentt"))
 
@@ -272,13 +275,13 @@ lmbf12.0 <- lmBF(happiness ~ 1 +
 # Effect of Stimuli Presence
 lmbf13.1 <- lmBF(happiness ~ image +
                    ResponseId + lab, 
-                 whichRandom = c("ResponseId", "lab"), 
+                 whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                  data = subset(DF.l.inc, 
                                condition == "pentask"))
 
 lmbf13.0 <- lmBF(happiness ~ 1 +
                    ResponseId + lab, 
-                 whichRandom = c("ResponseId", "lab"), 
+                 whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                  data = subset(DF.l.inc, 
                                condition == "pentask"))
 
@@ -292,13 +295,13 @@ lmbf13.0 <- lmBF(happiness ~ 1 +
 
 lmbf14.1 <- lmBF(happiness ~ trial +
                    ResponseId + lab, 
-                 whichRandom = c("ResponseId", "lab"), 
+                 whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                  data = subset(DF.l.inc, 
                                condition == "pentask"))
 
 lmbf14.0 <- lmBF(happiness ~ 1 +
                    ResponseId + lab, 
-                 whichRandom = c("ResponseId", "lab"), 
+                 whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                  data = subset(DF.l.inc, 
                                condition == "pentask"))
 
@@ -310,13 +313,13 @@ lmbf14.0 <- lmBF(happiness ~ 1 +
 # Interaction between Pose and Stimuli Presence
 lmbf15.1 <-  lmBF(happiness ~ image + trial + image : trial +
                     ResponseId + lab, 
-                  whichRandom = c("ResponseId", "lab"), 
+                  whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                   data = subset(DF.l.inc, 
                                 condition == "pentask"))
 
 lmbf15.0 <-  lmBF(happiness ~ image + trial + 
                     ResponseId + lab, 
-                  whichRandom = c("ResponseId", "lab"), 
+                  whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                   data = subset(DF.l.inc, 
                                 condition == "pentask"))
 
@@ -330,13 +333,13 @@ lmbf15.0 <-  lmBF(happiness ~ image + trial +
 # The effect of Pose in the presence
 lmbf16.1 <- lmBF(happiness ~ trial +  
                    ResponseId + lab, 
-                 whichRandom = c("ResponseId", "lab"), 
+                 whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                  data = subset(DF.l.inc, 
                                condition == "pentask" & image == "present"))
 
 lmb16.0 <- lmBF(happiness ~ 1 + 
                   ResponseId + lab, 
-                whichRandom = c("ResponseId", "lab"), 
+                whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                 data = subset(DF.l.inc, 
                               condition == "pentask" & image == "present"))
 
@@ -349,37 +352,36 @@ lmb16.0 <- lmBF(happiness ~ 1 +
 # The effect of Pose  in the the absence
 lmbf17.1 <- lmBF(happiness ~ trial +
                    ResponseId + lab, 
-                 whichRandom = c("ResponseId", "lab"), 
+                 whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                  data = subset(DF.l.inc, 
                                condition == "pentask" & image == "absentt"))
 
 lmbf17.0 <- lmBF(happiness ~ 1 +
                    ResponseId + lab, 
-                 whichRandom = c("ResponseId", "lab"), 
+                 whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                  data = subset(DF.l.inc, 
                                condition == "pentask" & image == "absentt"))
 
-(bf17 <- lmbf17.1/lmbf17.0) # 0.1222945 ±12.31%
-1/bf17 # 8.176982 ±12.31%
+(bf17 <- lmbf17.1/lmbf17.0) # 
 
 #################
 # pen-in-mouth with relaxed exclusion criteria  #
 #################
 # load data
-DF.l <- readRDS("data/processed/DF.l.rds") %>% #  old DF.incl 
+DF.l <- readRDS("DF.l.rds") %>% #  old DF.incl 
   mutate(ResponseId = ResponseId %>% 
            as.numeric() %>% 
            as.factor())
 
 lmbf18.1 <- lmBF(happiness ~ trial +  
                    ResponseId + lab, 
-                 whichRandom = c("ResponseId", "lab"), 
+                 whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                  data = subset(DF.l, 
                                condition == "pentask"))
 
 lmbf18.0 <- lmBF(happiness ~ 1 +
                    ResponseId + lab, 
-                 whichRandom = c("ResponseId", "lab"), 
+                 whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                  data = subset(DF.l, 
                                condition == "pentask"))
 
@@ -389,20 +391,20 @@ lmbf18.0 <- lmBF(happiness ~ 1 +
 # comparisons with filler tasks when images are absent  #
 #################
 # load data
-DF.l.full.inc <- readRDS("data/processed/DF.l.full.inc.rds") %>% #  old DF.full 
+DF.l.full.inc <- readRDS("DF.l.full.inc.rds") %>% #  old DF.full 
   mutate(ResponseId = ResponseId %>% 
            as.numeric() %>% 
            as.factor())
 
 lmbf19.1 <- lmBF(happiness ~ condition * trial +
                    ResponseId + lab, 
-                 whichRandom = c("ResponseId", "lab"), 
+                 whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                  data = subset(DF.l.full.inc, 
                                image == "absentt"))
 
 lmbf19.0 <- lmBF(happiness ~ condition + trial +  
                    ResponseId + lab, 
-                 whichRandom = c("ResponseId", "lab"), 
+                 whichRandom = c("ResponseId", "lab"), rscaleFixed = "ultrawide",
                  data = subset(DF.l.full.inc, 
                                image == "absentt"))
 
@@ -420,7 +422,7 @@ output = c(bf1@bayesFactor$bf, bf2@bayesFactor$bf,
            bf19@bayesFactor$bf)
 
 write.table(t(round(exp(output), 2)),
-            file="outputBayesFactor.txt",
+            file="outputBayesFactor ultrawide.txt",
             quote = F,
             col.names = F,
             row.names = F,
@@ -443,7 +445,7 @@ DF2.1.1.w <- data.frame(spread(DF2.1.1,
 ttestBF(x = DF2.1.1.w$fil.1, 
         y = DF2.1.1.w$happy, 
         paired = T, 
-        rscale = 0.5) # 3011970 ±0%
+        rscale = 1) # 3011970 ±0%
 
 DF2.1.2 <- subset(DF.l.full.inc, 
                   image == "absentt" & 
@@ -461,7 +463,7 @@ DF2.1.2.w <- data.frame(spread(DF2.1.2,
 ttestBF(x = DF2.1.2.w$fil.4, 
         y = DF2.1.2.w$happy, 
         paired = T, 
-        rscale = 0.5) # 9364341 ±0%%
+        rscale = 1) # 9364341 ±0%%
 
 
 DF2.2.1 <- subset(DF.l.full.inc, 
@@ -480,7 +482,7 @@ DF2.2.1.w <- data.frame(spread(DF2.2.1,
 ttestBF(x = DF2.2.1.w$fil.1, 
         y = DF2.2.1.w$happy, 
         paired = T, 
-        rscale = 0.5) # 3.542896 ±0%%
+        rscale = 1) # 3.542896 ±0%%
 
 DF2.2.2 <- subset(DF.l.full.inc, 
                   image == "absentt" & 
@@ -498,7 +500,7 @@ DF2.2.2.w <- data.frame(spread(DF2.2.2,
 ttestBF(x = DF2.2.2.w$fil.4, 
         y = DF2.2.2.w$happy, 
         paired = T, 
-        rscale = 0.5) # 7.412424 ±0%
+        rscale = 1) # 7.412424 ±0%
 
 DF2.3.1 <- subset(DF.l.full.inc, 
                   image == "absentt" & 
@@ -516,7 +518,7 @@ DF2.3.1.w <- data.frame(spread(DF2.3.1,
 ttestBF(x = DF2.3.1.w$fil.1, 
         y = DF2.3.1.w$happy, 
         paired = T, 
-        rscale = 0.5) # 5.478931 ±0% but in the oppisite
+        rscale = 1) # 5.478931 ±0% but in the oppisite
 
 summary(DF2.3.1.w)
 
@@ -536,10 +538,7 @@ DF2.3.2.w <- data.frame(spread(DF2.3.2,
 ttestBF(x = DF2.3.2.w$fil.4, 
         y = DF2.3.2.w$happy, 
         paired = T, 
-        rscale = 0.5) # 0.3721617 ±0.03%%
-1/exp(ttestBF(x = DF2.3.2.w$fil.4, 
-          y = DF2.3.2.w$happy, 
-          paired = T, 
-          rscale = 0.5)@bayesFactor$bf) # 2.69
+        rscale = 1) # 0.3721617 ±0.03%%
+1/0.3721617 # 2.6
 
-save.image("BayesFactorAnalyses.RData")
+save.image("BayesFactorAnalyses ultrawide.RData")
