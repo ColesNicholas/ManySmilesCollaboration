@@ -44,9 +44,3 @@ Each lab had two coders code the extent to which participants were (a) aware of 
 
 ## output folder
 Place where figures and tables are temporarily being stored.
-
-## updates folder [deleted but need to be pulled back in]
-This inactive folder will only be used by Nicholas. The folder contains code that (a) pulls data from the Qualtrics server, (b) calculates the number of observations per lab, and (c) pushes an updated sample size count to the Project Management Google Sheet (https://docs.google.com/spreadsheets/d/1mvfiso_H1lKNYJ0lE73caTfClHe7x6ANTl4uoYhVKJA/edit#gid=293196314)
-
-## file_generation folder [deleted but need to be pulled back in]
-This inactive folder will only be used by Nicholas. The folder contains code that (a) pulls data from the Qualtrics server, (b) creates site-specific data validation Google Sheets, and (c) creates site-specific coding Google Sheets.
