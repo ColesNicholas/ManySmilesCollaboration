@@ -55,81 +55,6 @@ DF.l <- readRDS("data/processed/DF.l.rds")
 DF.l.inc <- readRDS("data/processed/DF.l.inc.rds")
 ```
 
-## Descriptives table
-```{r eval = F}
-# descriptives for full sample 
-desc.1 <- DF.w %>% 
-  group_by(country) %>% 
-  summarise(t.n = n(),
-            t.m.age = mean(indiv_agee_var,
-                         na.rm = T),
-            t.sd.age = sd(indiv_agee_var,
-                        na.rm = T),
-            t.women = sum(indiv_gend_var == 1, na.rm = T) / n(),
-            t.men = sum(indiv_gend_var == 2, na.rm = T) / n(),
-            t.other = sum(indiv_gend_var == 3, na.rm = T) / n(),
-            
-            # inclusion criteria pass rate
-            inc.att = mean(inc.att),
-            inc.fol = mean(inc.fol),
-            inc.mat = mean(inc.mat),
-            inc.dev = mean(inc.dev),
-            inc.awa = sum(inc.awa, na.rm = T) / n(),
-            inc.dis = sum(inc.dis, na.rm = T) / n()
-            )
-
-# descriptives for subset that met inclusion criteria 
-desc.2 <- DF.w %>% 
-  filter(inc == 1,
-         inc.awa == 1) %>% 
-  group_by(country) %>% 
-  summarise(i.n = n(),
-            i.m.age = mean(indiv_agee_var,
-                         na.rm = T),
-            i.sd.age = sd(indiv_agee_var,
-                        na.rm = T),
-            i.women = sum(indiv_gend_var == 1, na.rm = T) / n(),
-            i.men = sum(indiv_gend_var == 2, na.rm = T) / n(),
-            i.other = sum(indiv_gend_var == 3, na.rm = T) / n()
-            )
-
-# merge descriptives
-desc = full_join(desc.1, desc.2, by = 'country')
-rm(desc.1, desc.2)
-
-# clean table
-desc <- desc %>% 
-  # round values
-  mutate_if(is.numeric,
-            funs(round(x = .,
-                       digits = 2)
-                  )
-            ) %>% 
-  
-  # create age text
-  mutate(t.m.age = paste0(t.m.age, 
-                          " (", t.sd.age, ")"),
-         i.m.age = paste0(i.m.age,
-                          " (", i.m.age, ")")
-         ) %>% 
-  
-  # create gender text
-  mutate(t.women = paste0(t.women, "; ",
-                          t.men, "; ",
-                          t.other),
-         i.women = paste0(i.women, "; ",
-                          i.men, "; ",
-                          i.other)) %>% 
-
-  # delete vestigial
-  select(-c(t.sd.age, t.men, t.other, 
-            i.sd.age, i.men, i.other))
-
-# export table
-write.csv(desc, "desc.csv")
-```
-
-
 ## Participant descriptives
 ```{r}
 # n participants
@@ -173,105 +98,6 @@ DF.w %>%
 DF.l.inc$ResponseId %>% unique() %>% length()
 ```
 
-Compliance, similarity, and genuineness descriptives
-```{r}
-f2.DF <- DF.l.inc %>% 
-  # select relevant variables
-  dplyr::select(ResponseId, trial, condition, 
-         qulty_rate_var, qulty_feel_var, qulty_smlr_var) %>% 
-  
-  # pivot longer so that there is one row for each moderator
-  pivot_longer(cols = c(qulty_rate_var, 
-                        qulty_smlr_var,
-                        qulty_feel_var),
-               names_to = "qual.ind") %>% 
-  
-  # delete duplicate set of observations in the neutral trial
-  filter(trial == "happy") %>% 
-  
-  # relevel factors 
-  mutate(qual.ind = factor(qual.ind,
-                           levels = c("qulty_rate_var",
-                                      "qulty_feel_var",
-                                      "qulty_smlr_var")),
-         qual.ind = dplyr::recode(qual.ind,
-                           qulty_rate_var = "compliance",
-                           qulty_feel_var = "genuineness",
-                           qulty_smlr_var = "similarity")
-         )
-```
-
-Get descriptives
-```{r}
-# m and sd for each quality indicator for each condition 
-desc1 <- f2.DF %>% 
-  group_by(condition, qual.ind) %>% 
-  summarise(m = round(mean(value,
-                           na.rm = T),
-                      2),
-            sd = round(sd(value, na.rm = T),
-                       2))
-# n for each quality indicator for each condition
-desc2 <- f2.DF %>% 
-  filter(!is.na(value)) %>% 
-  group_by(condition, qual.ind) %>% 
-  tally()
-# combine
-desc <- full_join(desc1, desc2)
-rm(desc1, desc2)
-```
-
-Plot
-```{r}
-ggplot(f2.DF,
-       aes(x = value)) +
-  
-  # split plot by condition and moderator
-  facet_grid(cols = vars(condition),
-             rows = vars(qual.ind),
-             scales = "free_y") +
-  
-  # plot histogram (as percentage)
-  geom_histogram(aes(y = stat(width*density)),
-                 bins = 7,
-                 fill = "gray60") +
-  
-  # add bin-specific percentage counts to histogram
-  stat_bin(aes(y = stat(width*density),
-               label = 
-                 paste0((round(stat(width*density),
-                               2) * 100),
-                        "%")), 
-           geom = "text",
-           bins = 7,
-           size = 2,
-           vjust = -.21) +
-  
-  # paste descriptive statistics to left of histogram
-  geom_text(data = desc,
-            aes(label = paste0("n = ", n,
-                               "\n",
-                               "M = ", m,
-                               "\n",
-                               "SD = ", sd)),
-            x = -1.25,
-            y = Inf,
-            size = 2,
-            hjust = 0,
-            vjust = 1.25) +
-  
-  # fix scales
-  scale_x_continuous(name = "Self-reported rating",
-                     breaks = c(1, 3, 5, 7),
-                     expand = expand_scale(mult = c(.30, .01))) +
-  scale_y_continuous(expand = expand_scale(mult = c(0, .14)),
-                     name = "Percent",
-                     labels = scales::percent_format())
-
-
-rm(f2.DF, desc)
-```
-
 ## Analyses
 Create list to save models in
 ```{r}
@@ -280,11 +106,11 @@ models <- list()
 
 ### Primary analyses
 #### With application of pre-registered exclusion criteria
-##### Maximal model
+##### With random slopes
 Fit model and inspect results
-```{r eval = F}
+```{r}
 # fit model
-models[["primary"]][["prereg.max"]] <-
+models[["primary"]][["prereg"]] <-
   lmer(happiness ~ trial * condition * image +
          (1 | lab) + (1 | ResponseId) + 
          (0 + trial | lab) +
@@ -297,16 +123,16 @@ models[["primary"]][["prereg.max"]] <-
        data = DF.l.inc)
 
 # inspect results
-summary(models[["primary"]][["prereg.max"]])
+summary(models[["primary"]][["prereg"]])
 
-anova(models[["primary"]][["prereg.max"]])
+anova(models[["primary"]][["prereg"]])
 
-joint_tests(models[["primary"]][["prereg.max"]],
+joint_tests(models[["primary"]][["prereg"]],
             by = "condition",
             lmerTest.limit = 9999)
 
 # descriptives
-emmeans(models[["primary"]][["prereg.max"]],
+emmeans(models[["primary"]][["prereg"]],
         pairwise ~ trial | condition,
         adjust = "none")
 
@@ -315,40 +141,30 @@ emmeans(models[["primary"]][["prereg.max"]],
 ##### Without random slopes
 ```{r}
 # fit model
-models[["primary"]][["prereg.trim"]] <-
+models[["primary"]][["prereg.noRS"]] <-
   lmer(happiness ~ trial * condition * image +
          (1 | lab) + (1 | ResponseId),
        data = DF.l.inc)
 
 # inspect results
-summary(models[["primary"]][["prereg.trim"]])
+summary(models[["primary"]][["prereg.noRS"]])
 
-anova(models[["primary"]][["prereg.trim"]])
+anova(models[["primary"]][["prereg.noRS"]])
 
-joint_tests(models[["primary"]][["prereg.trim"]],
+joint_tests(models[["primary"]][["prereg.noRS"]],
             by = "condition",
             lmerTest.limit = 9999)
 
 # descriptives
-emmeans(models[["primary"]][["prereg.max"]],
+emmeans(models[["primary"]][["prereg.noRS"]],
         pairwise ~ trial | condition,
         adjust = "none")
 ```
 
 ### Secondary analyses
 #### Do Participants Report Experiencing More Happiness During the Smiling vs. Filler Trials?
-Note: this code is all set to not evaluate because it is computationally intensive. It also removes the image absent condition because (a) it helps the model converge in a reasonably quick amount of time and (b) this condition is not relevant for the inferences (see manuscript for more information).  
+##### With random slopes
 ```{r}
-# prepare data
-tmp <- DF.l.full.inc %>% 
-  filter(trial != "neutr") %>% 
-  rowwise() %>% 
-  mutate(trial.r = if_else(condition = trial == "happy",
-                           true = "happy",
-                           false = "filler"),
-         trial.r = as.factor(trial.r)) %>% 
-  ungroup()
-  
 # fit model
 models[["secondary"]][["alt.exp"]] <-
   lmer(happiness ~ trial.r * condition * image +
@@ -360,7 +176,7 @@ models[["secondary"]][["alt.exp"]] <-
          (0 + trial.r : condition | lab)  + 
          (0 + condition : image | lab) + 
          (0 + trial.r : condition : image | lab),
-       data = tmp)
+       data = tmp.DF)
 
 # inspect results
 summary(models[["secondary"]][["alt.exp"]])
@@ -374,25 +190,46 @@ joint_tests(models[["secondary"]][["alt.exp"]],
 emmeans(models[["secondary"]][["alt.exp"]], 
         pairwise ~ trial.r | condition | image,
         adjust = "none")
-
-rm(tmp)
 ```
 
-Add non-random slope analysis
+##### Without random slopes
+```{r}
+# fit model
+models[["secondary"]][["alt.exp.noRS"]] <-
+  lmer(happiness ~ trial.r * condition * image +
+         (1 | lab) + (1 | ResponseId),
+       data = tmp.DF)
+
+# inspect results
+summary(models[["secondary"]][["alt.exp.noRS"]])
+
+anova(models[["secondary"]][["alt.exp.noRS"]])
+
+joint_tests(models[["secondary"]][["alt.exp.noRS"]], 
+            by = "image",
+            lmerTest.limit = 9999)
+
+emmeans(models[["secondary"]][["alt.exp.noRS"]], 
+        pairwise ~ trial.r | condition | image,
+        adjust = "none")
+
+rm(tmp.DF)
+```
 
 #### Group differences in quality indicators
 ##### Compliance with instructions
-With subset
+###### With random slopes
 ```{r}
-models[["secondary"]][["compl.diff.sub"]] <-
+# fit model
+models[["secondary"]][["compl.diff"]] <-
   lmer(qulty_rate_var ~ condition + image +
          (1 | lab) + 
          (0 + condition | lab)  +
          (0 + image | lab),
        data = DF.w)
 
-  
-emmeans(models[["secondary"]][["compl.diff.sub"]], 
+# inspect results
+emmeans(models[["secondary"]][["compl.diff"]], 
         pairwise ~ condition,
         adjust = "none")
 
@@ -400,35 +237,40 @@ DF.w %>%
   group_by(condition) %>% 
   summarise(m = mean(qulty_rate_var),
             sd = sd(qulty_rate_var))
+```
 
+###### Without random slopes
+```{r}
 # without random slopes
-noRS <- lmer(qulty_rate_var ~ condition + image +
+models[["secondary"]][["compl.diff.noRS"]] <-
+  lmer(qulty_rate_var ~ condition + image +
          (1 | lab),
        data = DF.w)
 
-anova(noRS)
+# inspect results
+anova(models[["secondary"]][["compl.diff.noRS"]])
 
-emmeans(noRS, 
+emmeans(models[["secondary"]][["compl.diff.noRS"]], 
         pairwise ~ condition,
         adjust = "none")
-
-rm(noRS)
 ```
 
 
 ##### Pose similarity 
-With random slopes
+###### With random slopes
 ```{r}
-models[["secondary"]][["simil.diff.sub"]] <-
+# fit model
+models[["secondary"]][["simil.diff"]] <-
   lmer(qulty_smlr_var ~ condition + image +
          (1 | lab) + 
          (0 + condition | lab)  +
          (0 + image | lab),
        data = DF.w)
 
-anova(models[["secondary"]][["simil.diff.sub"]])
+# inspect results
+anova(models[["secondary"]][["simil.diff"]])
 
-emmeans(models[["secondary"]][["simil.diff.sub"]], 
+emmeans(models[["secondary"]][["simil.diff"]], 
         pairwise ~ condition,
         adjust = "none")
 
@@ -438,35 +280,47 @@ DF.w %>%
                      na.rm = T),
             sd = sd(qulty_smlr_var,
                     na.rm = T))
+```
 
-# without random slopes
-noRS <- lmer(qulty_smlr_var ~ condition + image +
+###### Without random slopes
+```{r}
+# fit model
+models[["secondary"]][["simil.diff.noRS"]] <-
+  lmer(qulty_smlr_var ~ condition + image +
          (1 | lab),
        data = DF.w)
 
-anova(noRS)
+# inspect results
+anova(models[["secondary"]][["simil.diff.noRS"]])
 
-emmeans(noRS, 
+emmeans(models[["secondary"]][["simil.diff.noRS"]], 
         pairwise ~ condition,
         adjust = "none")
 
-rm(noRS)
-
+DF.w %>% 
+  group_by(condition) %>% 
+  summarise(m = mean(qulty_smlr_var,
+                     na.rm = T),
+            sd = sd(qulty_smlr_var,
+                    na.rm = T))
 ```
 
+
 ##### Genuineness ratings
-With random slopes
+###### With random slopes
 ```{r}
-models[["secondary"]][["gen.diff.sub"]] <-
+# fit model
+models[["secondary"]][["gen.diff"]] <-
   lmer(qulty_feel_var ~ condition + image +
          (1 | lab) + 
          (0 + condition | lab)  +
          (0 + image | lab),
        data = DF.w)
 
-anova(models[["secondary"]][["gen.diff.sub"]])
+# insprect results
+anova(models[["secondary"]][["gen.diff"]])
 
-emmeans(models[["secondary"]][["gen.diff.sub"]], 
+emmeans(models[["secondary"]][["gen.diff"]], 
         pairwise ~ condition,
         adjust = "none")
 
@@ -479,36 +333,140 @@ DF.w %>%
   group_by(image) %>% 
   summarise(m = mean(qulty_feel_var),
             sd = sd(qulty_feel_var))
+```
 
-# without random slopes
-noRS <-
+###### Without random slopes
+```{r}
+# fit model
+models[["secondary"]][["gen.diff.noRS"]] <-
   lmer(qulty_feel_var ~ condition + image +
          (1 | lab),
        data = DF.w)
 
-anova(noRS)
+# inspect results
+anova(models[["secondary"]][["gen.diff.noRS"]])
 
-emmeans(noRS, 
+emmeans(models[["secondary"]][["gen.diff.noRS"]], 
         pairwise ~ condition,
         adjust = "none")
 ```
 
-Without random slopes
+#### Awareness of study hypothesis
+##### Group differences
+###### With random slopes
 ```{r}
-models[["secondary"]][["gen.diff.sub.noRS"]] <-
-  lmer(qulty_feel_var ~ condition + image +
+# fit model
+models[["secondary"]][["awareness.diff"]] <-
+  lmer(awareness ~ condition + image + 
+         (1 | lab) + 
+         (0 + condition | lab)  +
+         (0 + image | lab),
+       data = DF.w)
+
+# inspect results
+anova(models[["secondary"]][["awareness.diff"]])
+
+emmeans(models[["secondary"]][["awareness.diff"]], 
+        pairwise ~ condition,
+        adjust = "none")
+
+DF.w %>% 
+  group_by(condition) %>% 
+  summarise(m.awa = mean(awareness,
+                         na.rm = T),
+            sd.awa = sd(awareness,
+                        na.rm = T))
+```
+
+###### Without random slopes
+```{r}
+# fit model
+models[["secondary"]][["awareness.diff.noRS"]] <-
+  lmer(awareness ~ condition + image + 
          (1 | lab),
+       data = DF.w)
+
+# inspect results
+anova(models[["secondary"]][["awareness.diff.noRS"]])
+
+emmeans(models[["secondary"]][["awareness.diff.noRS"]], 
+        pairwise ~ condition,
+        adjust = "none")
+```
+
+##### Moderation by awareness
+###### With random slopes
+```{r}
+# fit model
+models[["secondary"]][["awareness.mod"]] <- 
+  lmer(happiness ~ 
+         trial + condition + image + awareness.c + trial:awareness.c +
+         (1 | lab) +
+         (1 | ResponseId) +
+         (0 + trial | lab) + 
+         (0 + condition | lab) + 
+         (0 + image | lab) +  
+         (0 + trial:awareness.c | lab),
+       data = DF.l)
+
+# inspect results
+models[["secondary"]][["awareness.mod"]] %>% anova()
+
+models[["secondary"]][["awareness.mod"]] %>% summary()
+```
+
+###### Without random slopes
+```{r}
+# fit model
+models[["secondary"]][["awareness.mod.noRS"]] <- 
+  lmer(happiness ~ 
+         trial + condition + image + awareness.c + trial:awareness.c +
+         (1 | lab) +
+         (1 | ResponseId),
+       data = DF.l)
+
+# inspect results
+models[["secondary"]][["awareness.mod.noRS"]] %>% anova()
+
+models[["secondary"]][["awareness.mod.noRS"]] %>% summary()
+```
+
+
+#### Moderation by body awareness
+##### With random slopes
+```{r}
+# fit model
+models[["secondary"]][["body.aware.mod"]] <- 
+  lmer(happiness ~ 
+         trial * condition * image + indiv_body + trial : indiv_body +
+         (1 | lab) + (1 | ResponseId) + 
+         (0 + trial | lab) +
+         (0 + condition | lab)  +
+         (0 + image | lab) +
+         (0 + trial : indiv_body | lab),
        data = DF.l.inc)
 
-anova(models[["secondary"]][["gen.diff.sub.noRS"]])
-
-emmeans(models[["secondary"]][["gen.diff.sub.noRS"]], 
-        pairwise ~ condition,
-        adjust = "none")
+# inspect results
+models[["secondary"]][["body.aware.mod"]] %>% anova()
+models[["secondary"]][["body.aware.mod"]] %>% summary()
 ```
 
-#### Effect of facial feedback on anxiety and anger
-Anxiety: fit model and inspect results
+##### Without random slopes
+```{r}
+# fit model
+models[["secondary"]][["body.aware.mod.noRS"]] <- 
+  lmer(happiness ~ 
+         trial * condition * image + indiv_body + trial : indiv_body +
+         (1 | lab) + (1 | ResponseId),
+       data = DF.l.inc)
+
+# inspect results
+models[["secondary"]][["body.aware.mod.noRS"]] %>% anova()
+models[["secondary"]][["body.aware.mod.noRS"]] %>% summary()
+```
+
+#### Anxiety 
+##### With random slopes
 ```{r}
 # fit model
 models[["secondary"]][["anxiety"]] <-
@@ -529,7 +487,6 @@ anova(models[["secondary"]][["anxiety"]])
 emmeans(models[["secondary"]][["anxiety"]], 
         pairwise ~ condition,
         adjust = "none")
-
 
 DF.l.inc %>% 
   group_by(trial) %>% 
@@ -553,7 +510,24 @@ lmer(anxiety ~ trial * condition * image +
          data = DF.l) %>% summary()
 ```
 
-Anger: fit model and inspect results
+##### Without random slopes
+```{r}
+# fit model
+models[["secondary"]][["anxiety.noRS"]] <-
+  lmer(anxiety ~ trial * condition * image +
+         (1 | lab) + (1 | ResponseId),
+       data = DF.l.inc)
+
+# inspect results
+anova(models[["secondary"]][["anxiety.noRS"]])
+
+emmeans(models[["secondary"]][["anxiety.noRS"]], 
+        pairwise ~ condition,
+        adjust = "none")
+```
+
+#### Anger
+##### With random slopes
 ```{r}
 # fit model
 models[["secondary"]][["anger"]] <-
@@ -574,49 +548,32 @@ anova(models[["secondary"]][["anger"]])
 emmeans(models[["secondary"]][["anger"]], 
         pairwise ~ condition,
         adjust = "none")
-
-# no RS
-tmp <-  lmer(anger ~ trial * condition * image +
-         (1 | lab) + (1 | ResponseId),
-         data = DF.l.inc)
-
-anova(tmp)
-emmeans(tmp, 
-        pairwise ~ condition,
-        adjust = "none")
-
-# no RS or exclusion
-tmp <-  lmer(anger ~ trial * condition * image +
-         (1 | lab) + (1 | ResponseId),
-         data = DF.l)
-
-anova(tmp)
 ```
 
-Descriptives
-```{r}
-DF.l %>% 
-  group_by(condition) %>% 
-  summarise(m.anx = mean(anxiety),
-            sd.anx = sd(anxiety),
-            m.ang = mean(anger),
-            sd.ang = sd(anger))
 
-DF.l %>% 
-  group_by(trial) %>% 
-  summarise(m.anx = mean(anxiety),
-            sd.anx = sd(anxiety),
-            m.ang = mean(anger),
-            sd.ang = sd(anger))
-```
-
-#### Moderator analyses
-##### Quality
-###### Compliance with instructions
-Full model
+##### Without random slopes
 ```{r}
 # fit model
-models[["secondary"]][["quality.rating"]] <-
+models[["secondary"]][["anger.noRS"]] <-
+  lmer(anger ~ trial * condition * image +
+         (1 | lab) + (1 | ResponseId),
+       data = DF.l.inc)
+
+# inspect results
+anova(models[["secondary"]][["anger.noRS"]])
+
+emmeans(models[["secondary"]][["anger.noRS"]], 
+        pairwise ~ condition,
+        adjust = "none")
+```
+
+
+#### Quality Moderator analyses
+##### Compliance with instructions
+###### With random slopes
+```{r}
+# fit model
+models[["secondary"]][["compl.mod"]] <-
   lmer(happiness ~ 
          trial * condition * image + qulty_rate_var.c + trial:qulty_rate_var.c +
          (1 | lab) + (1 | ResponseId) + 
@@ -635,73 +592,26 @@ confint(models[["secondary"]][["quality.rating"]])
 anova(models[["secondary"]][["quality.rating"]])
 ```
 
-Look at facial feedback task-specific moderating effects
-```{r}
-# mimicry
-m <- lmer(happiness ~ 
-            trial * image * qulty_rate_var.c +
-            (1 | lab) + 
-            (1 | ResponseId),
-          data = DF.l,
-          subset = condition == "mimicry")
-
-m %>% anova()
-m %>% summary()
-m %>% confint()
-
-# voluntary facial action task
-m <- lmer(happiness ~ 
-            trial * image * qulty_rate_var.c +
-            (1 | lab) + 
-            (1 | ResponseId),
-          data = DF.l,
-          subset = condition == "directd")
-
-m %>% anova()
-m %>% summary()
-m %>% confint()
-
-# pen-in-mouth
-m <- lmer(happiness ~ 
-            trial * image * qulty_rate_var.c +
-            (1 | lab) + 
-            (1 | ResponseId),
-          data = DF.l,
-          subset = condition == "pentask") 
-
-m %>% anova()
-m %>% summary()
-m %>% confint()
-
-rm(m)
-```
-
-Examine how much adherence is required for a significant facial feedback effect
-```{r}
-# fit simpler model without centered variable for ease of interpretation
-tmp <- lmer(happiness ~ 
-              trial * condition * qulty_rate_var +
-         (1 | lab) + 
-         (1 | ResponseId),
-       data = DF.l)
-
-# five is where there is a switch (except for pen, which requires a 6)
-lapply(X = c(1 : 7), 
-       function(x){
-         emmeans(tmp,
-                 pairwise ~ trial | condition,
-                 at = list(qulty_rate_var = x))
-         }
-       )
-
-# delete vestigial
-rm(tmp)
-```
-
-###### Pose similarity
+###### Without random slopes
 ```{r}
 # fit model
-models[["secondary"]][["simil.rating"]] <-
+models[["secondary"]][["compl.mod.noRS"]] <-
+  lmer(happiness ~ 
+         trial * condition * image + qulty_rate_var.c + trial:qulty_rate_var.c +
+         (1 | lab) + (1 | ResponseId),
+       data = DF.l.inc)
+
+# inspect results
+summary(models[["secondary"]][["compl.mod.noRS"]])
+confint(models[["secondary"]][["compl.mod.noRS"]])
+anova(models[["secondary"]][["compl.mod.noRS"]])
+```
+
+##### Pose similarity
+###### With random slopes
+```{r}
+# fit model
+models[["secondary"]][["simil.mod"]] <-
   lmer(happiness ~ 
          trial * condition * image + qulty_smlr_var.c + trial:qulty_smlr_var.c +
          (1 | lab) + (1 | ResponseId) + 
@@ -720,73 +630,26 @@ confint(models[["secondary"]][["simil.rating"]])
 anova(models[["secondary"]][["simil.rating"]])
 ```
 
-Look at facial feedback task-specific moderating effects
-```{r}
-# mimicry
-m <- lmer(happiness ~ 
-            trial * image * qulty_smlr_var.c +
-            (1 | lab) + 
-            (1 | ResponseId),
-          data = DF.l,
-          subset = condition == "mimicry")
-
-m %>% anova()
-m %>% summary()
-m %>% confint()
-
-# voluntary facial action task
-m <- lmer(happiness ~ 
-            trial * image * qulty_smlr_var.c +
-            (1 | lab) + 
-            (1 | ResponseId),
-          data = DF.l,
-          subset = condition == "directd")
-
-m %>% anova()
-m %>% summary()
-m %>% confint()
-
-# pen-in-mouth
-m <- lmer(happiness ~ 
-            trial * image * qulty_smlr_var.c +
-            (1 | lab) + 
-            (1 | ResponseId),
-          data = DF.l,
-          subset = condition == "pentask")
-
-m %>% anova()
-m %>% summary()
-m %>% confint()
-
-rm(m)
-```
-
-Examine how much similarity is required for a significant facial feedback effect
-```{r}
-# fit simpler model without centered variable for ease of interpretation
-tmp <- lmer(happiness ~ 
-              trial * condition * qulty_smlr_var +
-         (1 | lab) + 
-         (1 | ResponseId),
-       data = DF.l)
-
-# 2 is where there is a switch (for all besides mimicry, which requires a 3)
-lapply(X = c(1 : 7), 
-       function(x){
-         emmeans(tmp,
-                 pairwise ~ trial | condition,
-                 at = list(qulty_smlr_var = x))
-         }
-       )
-
-# delete vestigial
-rm(tmp)
-```
-
-###### Genuineness ratings
+###### Without random slopes
 ```{r}
 # fit model
-models[["secondary"]][["feel.rating"]] <-
+models[["secondary"]][["simil.mod.noRS"]] <-
+  lmer(happiness ~ 
+         trial * condition * image + qulty_smlr_var.c + trial:qulty_smlr_var.c +
+         (1 | lab) + (1 | ResponseId),
+       data = DF.l.inc)
+
+# inspect results
+summary(models[["secondary"]][["simil.mod.noRS"]])
+confint(models[["secondary"]][["simil.mod.noRS"]])
+anova(models[["secondary"]][["simil.mod.noRS"]])
+```
+
+##### Genuineness ratings
+###### With random slopes
+```{r}
+# fit model
+models[["secondary"]][["gen.mod"]] <-
   lmer(happiness ~ 
          trial * condition * image + qulty_feel_var.c + trial:qulty_feel_var.c +
          (1 | lab) + (1 | ResponseId) + 
@@ -800,231 +663,22 @@ models[["secondary"]][["feel.rating"]] <-
        data = DF.l.inc)
 
 # inspect results
-summary(models[["secondary"]][["feel.rating"]])
-anova(models[["secondary"]][["feel.rating"]])
+summary(models[["secondary"]][["gen.mod"]])
+anova(models[["secondary"]][["gen.mod"]])
 ```
 
-Look at facial feedback task-specific moderating effects
-```{r}
-# facial mimicry
-m <- lmer(happiness ~ 
-            trial * image * qulty_feel_var.c +
-            (1 | lab) + 
-            (1 | ResponseId),
-          data = DF.l,
-          subset = condition == "mimicry")
-
-m %>% anova()
-m %>% summary()
-m %>% confint()
-
-# voluntary facial action task
-m <- lmer(happiness ~ 
-            trial * image * qulty_feel_var.c +
-            (1 | lab) + 
-            (1 | ResponseId),
-          data = DF.l,
-          subset = condition == "directd")
-
-m %>% anova()
-m %>% summary()
-m %>% confint()
-
-# pen-in-mouth
-m <- lmer(happiness ~ 
-            trial * image * qulty_feel_var.c +
-            (1 | lab) + 
-            (1 | ResponseId),
-          data = DF.l,
-          subset = condition == "pentask")
-
-m %>% anova()
-m %>% summary()
-m %>% confint()
-
-rm(m)
-```
-
-Examine how much genuineness is required for a significant facial feedback effect
-```{r}
-# fit simpler model without centered variable for ease of interpretation
-tmp <- lmer(happiness ~ 
-              trial * condition * qulty_feel_var +
-         (1 | lab) + 
-         (1 | ResponseId),
-       data = DF.l)
-
-# 2 is when it switches over (for all conditions)
-lapply(X = c(1 : 7), 
-       function(x){
-         emmeans(tmp,
-                 pairwise ~ trial | condition,
-                 at = list(qulty_feel_var = x))
-         }
-       )
-
-# delete vestigial
-rm(tmp)
-```
-
-#### other inclusion criteria
-computer check
-```{r}
-DF.w <- DF.w %>% 
-  mutate(inc.dev = as.factor(inc.dev))
-
-tmp <- glmer(inc.dev ~ condition + image +
-        (1 | lab) + 
-         (0 + condition | lab)  +
-         (0 + image | lab),
-      data = DF.w,
-      family = binomial)
-
-
-library(car)
-Anova(tmp)
-
-# without random slopes
-tmp <- glmer(inc.dev ~ condition + image +
-        (1 | lab),
-      data = DF.w,
-      family = binomial)
-
-Anova(tmp)
-
-rm(tmp)
-```
-
-attention check
-```{r}
-DF.w <- DF.w %>% 
-  mutate(inc.att = as.factor(inc.att))
-
-tmp <- glmer(inc.att ~ condition + image +
-        (1 | lab) + 
-         (0 + condition | lab)  +
-         (0 + image | lab),
-      data = DF.w,
-      family = binomial)
-
-Anova(tmp)
-
-# without random slopes
-tmp <- glmer(inc.att ~ condition + image +
-        (1 | lab),
-      data = DF.w,
-      family = binomial)
-
-Anova(tmp)
-
-rm(tmp)
-```
-
-Distraction
-```{r}
-tmp <- lmer(distraction ~ condition + image + 
-         (1 | lab) + 
-         (0 + condition | lab)  +
-         (0 + image | lab),
-       data = DF.w)
-
-anova(tmp)
-
-tmp <- lmer(distraction ~ condition + image + 
-         (1 | lab),
-       data = DF.w)
-
-anova(tmp)
-```
-
-
-##### Awareness
-Test whether certain facial feedback tasks lead to higher levels of awareness than others
+###### Without random slopes
 ```{r}
 # fit model
-models[["secondary"]][["awareness.diff"]] <-
-  lmer(awareness ~ condition + image + 
-         (1 | lab) + 
-         (0 + condition | lab)  +
-         (0 + image | lab),
-       data = DF.w)
-
-# inspect results
-anova(models[["secondary"]][["awareness.diff"]])
-
-emmeans(models[["secondary"]][["awareness.diff"]], 
-        pairwise ~ condition,
-        adjust = "none")
-
-DF.w %>% 
-  group_by(condition) %>% 
-  summarise(m.awa = mean(awareness,
-                         na.rm = T),
-            sd.awa = sd(awareness,
-                        na.rm = T))
-
-no.RS <- lmer(awareness ~ condition + image + 
-         (1 | lab),
-       data = DF.w)
-anova(no.RS)
-emmeans(no.RS, 
-        pairwise ~ condition,
-        adjust = "none")
-
-rm(no.RS)
-```
-
-Test whether awareness moderates facial feedback effects
-```{r}
-# fit model
-models[["secondary"]][["awareness"]] <- 
+models[["secondary"]][["gen.mod.noRS"]] <-
   lmer(happiness ~ 
-         trial + condition + image + awareness.c + trial:awareness.c +
-         (1 | lab) +
-         (1 | ResponseId) +
-         (0 + trial | lab) + 
-         (0 + condition | lab) + 
-         (0 + image | lab) +  
-         (0 + trial:awareness.c | lab),
-       data = DF.l)
-
-models[["secondary"]][["awareness"]] %>% anova()
-
-models[["secondary"]][["awareness"]] %>% summary()
-
-models[["secondary"]][["awareness"]] %>% confint()
-
-lmer(happiness ~ 
-       trial + condition + image + awareness.c + trial:awareness.c +
-       (1 | lab) +
-       (1 | ResponseId),
-     data = DF.l) %>% summary()
-
-```
-
-##### Body awareness
-```{r}
-# fit model
-models[["secondary"]][["body.aware"]] <- 
-  lmer(happiness ~ 
-         trial * condition * image + indiv_body + trial : indiv_body +
-         (1 | lab) + (1 | ResponseId) + 
-         (0 + trial | lab) +
-         (0 + condition | lab)  +
-         (0 + image | lab) +
-         (0 + trial : indiv_body | lab),
-       data = DF.l.inc)
-
-# inspect results
-models[["secondary"]][["body.aware"]] %>% anova()
-models[["secondary"]][["body.aware"]] %>% summary()
-
-# wRS
-tmp <- lmer(happiness ~ 
-         trial * condition * image + indiv_body + trial : indiv_body +
+         trial * condition * image + qulty_feel_var.c + trial:qulty_feel_var.c +
          (1 | lab) + (1 | ResponseId),
        data = DF.l.inc)
 
+# inspect results
+summary(models[["secondary"]][["gen.mod.noRS"]])
+anova(models[["secondary"]][["gen.mod.noRS"]])
 ```
 
 ### Exploratory Analyses
@@ -1061,21 +715,18 @@ DF.l.full.inc %>%
             sd = sd(happiness))
 ```
 
-#### Model with anxiety
+#### Relationship between happiness and anxiety
 ```{r}
-m <- 
+# fit model
+models[["exploratory"]][["hap.anx"]] <- 
   lmer(happiness ~ trial * image * condition + anxiety +
          (1 | ResponseId) +
          (1 | lab),
        data = DF.l.inc)
-    
-summary(m) 
-confint(m)
-anova(m)
 
-joint_tests(m,
-            by = "condition",
-            lmerTest.limit = 9999)
+# inspect results    
+summary(models[["exploratory"]][["hap.anx"]]) 
+anova(models[["exploratory"]][["hap.anx"]])
 ```
 
 #### Primary analyses excluding anxious participants
@@ -1106,108 +757,102 @@ joint_tests(models[["exploratory"]][["no.anx"]],
 rm(DF.inc.no.anx)
 ```
 
-#### J-N analyses
-Compliance
+### Group differences in other inclusion criteria
+Prep dataframe
 ```{r}
-library('interactions')
+DF.w <- DF.w %>% 
+  mutate(inc.dev = as.factor(inc.dev),
+         inc.att = as.factor(inc.att))
 
-tmp <- DF.l %>% 
-  mutate(trial.n = as.numeric(trial) - 1)
-
-m <- lmer(happiness ~ trial.n * qulty_rate_var +
-            (1 | ResponseId) +
-            (1 | lab),
-          data = tmp)
-
-summary(m)
-
-johnson_neyman(model = m, 
-               pred = trial.n, 
-               modx = qulty_rate_var)
+library(car)
 ```
 
-Similarity
+#### Computer check
+##### With random slopes
 ```{r}
-m <- lmer(happiness ~ trial.n * qulty_smlr_var +
-            (1 | ResponseId) +
-            (1 | lab),
-          data = tmp)
+# fit model
+models[["secondary"]][["cpu.diff"]] <-
+  glmer(inc.dev ~ condition + image +
+          (1 | lab) + 
+          (0 + condition | lab)  +
+          (0 + image | lab),
+        data = DF.w,
+        family = binomial)
 
-summary(m)
-
-johnson_neyman(model = m, 
-               pred = trial.n, 
-               modx = qulty_smlr_var)
+# examine results
+Anova(models[["secondary"]][["cpu.diff"]])
 ```
 
-Genuineness
+##### Without random slopes
 ```{r}
-m <- lmer(happiness ~ trial.n * qulty_feel_var +
-            (1 | ResponseId) +
-            (1 | lab),
-          data = tmp)
+# fit model
+models[["secondary"]][["cpu.diff.noRS"]] <-
+  glmer(inc.dev ~ condition + image +
+          (1 | lab),
+        data = DF.w,
+        family = binomial)
 
-summary(m)
-
-johnson_neyman(model = m, 
-               pred = trial.n, 
-               modx = qulty_feel_var)
+# examine results
+Anova(models[["secondary"]][["cpu.diff.noRS"]])
 ```
 
+#### Attention check
+##### With random slopes
 ```{r}
-# add sig cutoffs
-f2.DF <- as.data.frame(f2.DF)
-f2.DF$sig.cross <- NA
-f2.DF[f2.DF$qual.ind == "compliance", ]$sig.cross <- 4.17
-f2.DF[f2.DF$qual.ind == "similarity", ]$sig.cross <- 1.73
-f2.DF[f2.DF$qual.ind == "genuineness", ]$sig.cross <- 1.69
+# fit model
+models[["secondary"]][["att.diff"]] <-
+  glmer(inc.att ~ condition + image +
+          (1 | lab) + 
+          (0 + condition | lab)  +
+          (0 + image | lab),
+        data = DF.w,
+        family = binomial)
+
+# examine results
+Anova(tmp)
 ```
 
-
+##### Without random slopes
 ```{r}
-ggplot(f2.DF,
-       aes(x = value)) +
-  
-  # split plot by condition and moderator
-  facet_grid(cols = vars(condition),
-             rows = vars(qual.ind),
-             scales = "free_y") +
-  
-  # plot histogram (as percentage)
-  geom_histogram(aes(y = stat(width*density)),
-                 bins = 7,
-                 fill = "gray60") +
-  
-  #
-  geom_rect(aes(xmin = sig.cross,
-                xmax = 7,
-                ymin = 0,
-              ymax = .8 
-                ),
-            fill = "lightgreen",
-            alpha = .01) +
-  scale_x_continuous(
-    breaks = c(1, 3, 5, 7))
+# fit model
+models[["secondary"]][["att.diff.noRS"]] <-
+  glmer(inc.att ~ condition + image +
+          (1 | lab),
+        data = DF.w,
+        family = binomial)
+
+# examine results
+Anova(tmp)
 ```
 
+#### Distraction
+##### With random slopes
 ```{r}
-tmp <- DF.l.inc %>% 
-  filter(qulty_feel_var > 5)
-
-
-m <-
-  lmer(happiness ~ trial * condition * image +
-         (1 | lab) + (1 | ResponseId),
-       data = tmp)
+# fit model
+models[["secondary"]][["dis.diff"]] <-
+  lmer(distraction ~ condition + image + 
+         (1 | lab) + 
+         (0 + condition | lab)  +
+         (0 + image | lab),
+       data = DF.w)
 
 # inspect results
-summary(m)
-
-anova(m)
-
-joint_tests(m,
-            by = "condition",
-            lmerTest.limit = 9999)
-
+anova(models[["secondary"]][["dis.diff"]])
 ```
 
+##### Without random slopes
+```{r}
+# fit model
+models[["secondary"]][["dis.diff.noRS"]] <-
+  lmer(distraction ~ condition + image + 
+         (1 | lab),
+       data = DF.w)
+
+# inspect results
+anova(models[["secondary"]][["dis.diff.noRS"]])
+```
+
+## Save output
+```{r}
+write_rds(models, "output/analyses/freq.models.Rds")
+```
