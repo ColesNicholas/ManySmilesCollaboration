@@ -50,6 +50,13 @@ DF.l.inc <- readRDS("data/processed/DF.l.inc.rds") %>%
            as.factor()
          ) %>% 
   as.data.frame()
+
+DF.l <- readRDS("data/processed/DF.l.rds") %>% 
+  mutate(ResponseId = ResponseId %>% 
+           as.numeric() %>% 
+           as.factor()
+         ) %>% 
+  as.data.frame()
 ```
 
 ## Set prior and iterations
@@ -277,6 +284,30 @@ exp.pci.0 <-
 exp.pci <- exp.pci.1 / exp.pci.0
 ```
 
+### Pen-in-mouth effect w/out random slopes  or  exclusions
+```{r}
+exp.p.1.p <- 
+  lmBF(happiness ~ trial +
+         ResponseId + lab, 
+       whichRandom = c("ResponseId", "lab"),
+       rscaleFixed = pr,
+       data = subset(DF.l, 
+                     condition == "pentask"),
+       iterations = it)
+
+exp.p.0.p <- 
+  lmBF(happiness ~ 1 +
+         ResponseId + lab, 
+       whichRandom = c("ResponseId", "lab"), 
+       rscaleFixed = pr,
+       data = subset(DF.l, 
+                     condition == "pentask"),
+       iterations = it)
+
+exp.p.p <- exp.p.1.p / exp.p.0.p
+```
+
+
 ## Save models
 ```{r}
 bayes.models <-
@@ -297,7 +328,9 @@ bayes.models <-
        exp.pi.1 = exp.pi.1,
        exp.pi.0 = exp.pi.0,
        exp.pci.1 = exp.pci.1,
-       exp.pci.0 = exp.pci.0)
+       exp.pci.0 = exp.pci.0,
+       exp.p.1.p = exp.p.1.p,
+       exp.p.0.p = exp.p.0.p)
 
 saveRDS(bayes.models, 
         file = paste0(#"output/analyses/", # commented out for now
@@ -318,8 +351,8 @@ output <-
     p.v@bayesFactor$bf, 
     p.p@bayesFactor$bf, 
     exp.pi@bayesFactor$bf, 
-    exp.pci@bayesFactor$bf
-    )
+    exp.pci@bayesFactor$bf,
+    exp.p.p@bayesFactor$bf)
 
 write.table(t(round(exp(output), 2)),
             file = paste0(#"output/analyses/", # commented out for now
@@ -338,6 +371,5 @@ save.image(paste0("BayesFactorAnalyses",
                   pr,
                   ".RData")
            )
-
 ```
 
