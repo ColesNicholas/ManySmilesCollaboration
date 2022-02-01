@@ -1,0 +1,456 @@
+---
+title: 'Frequentist Data Analysis Code for the Many Smiles Collaboration'
+editor_options:
+  chunk_output_type: console
+---
+## Notes for Marco
+When I tested the code with 10 iterations, the following models yielded "NA" for the Bayes Factors (a) the Pose by Condition interaction models, and (b) the simple effect models. I could override this by adding "noSample = F" as an argument--but I left that code out for now in case the error message was actually driven by problems with the small number of iterations I specified. 
+
+## Setup R environment
+```{r message = FALSE, results = "hide"}
+# clear environment
+rm(list = ls())
+
+# set seed
+set.seed(2)
+
+# turn scientific notation off
+options(scipen = 999)
+
+# allow for Type III Sums of Square
+options(contrasts = c('contr.sum', 'contr.poly'))
+
+
+# install (if necessary) and load packages
+  # function written by stevenworthington 
+  Ipak <- function(pkg){
+      new.pkg <- pkg[!(pkg %in% installed.packages()[, 'Package'])]
+      
+      if (length(new.pkg)) 
+          install.packages(new.pkg, dependencies = TRUE)
+      
+      sapply(pkg, require, character.only = TRUE)
+  }
+
+  # vector of necessary packages
+  packages <- c('tidyverse', 'BayesFactor')
+  
+  # using vector of packages, call ipak function
+  Ipak(packages)
+  
+  # delete vestigial
+  rm(packages, Ipak)
+```
+
+## Open data
+```{r}
+DF.l.inc <- readRDS("data/processed/DF.l.inc.rds") %>% 
+  mutate(ResponseId = ResponseId %>% 
+           as.numeric() %>% 
+           as.factor()
+         ) %>% 
+  as.data.frame()
+
+DF.l <- readRDS("data/processed/DF.l.rds") %>% 
+  mutate(ResponseId = ResponseId %>% 
+           as.numeric() %>% 
+           as.factor()
+         ) %>% 
+  as.data.frame()
+```
+
+## Set prior and iterations
+User should select whichever prior they wish to test (medium, wide, or ultrawide)
+```{r}
+pr <- "medium"
+#pr <- "wide"
+#pr <- "ultrawide"
+```
+
+Iterations should be set to 1000 by default, but users can adjust as needed
+```{r}
+it <- 1000
+```
+
+## Primary analyses
+### With random slopes
+#### Pose main effect
+```{r}
+p.1 <- 
+  lmBF(happiness ~ trial +
+         ResponseId + lab + lab:trial, 
+       whichRandom = c("ResponseId", "lab", "lab:trial"),
+       rscaleFixed = pr,
+       data = DF.l.inc,
+       iterations = it)
+
+
+p.0 <- 
+  lmBF(happiness ~ 1 +
+         ResponseId + lab + lab:trial, 
+       whichRandom = c("ResponseId", "lab", "lab:trial"), 
+       rscaleFixed = pr,
+       data = DF.l.inc,
+       iterations = it)
+
+p <- p.1 / p.0 # 102.6253 ±9.38%
+```
+
+#### Condition main effect
+```{r}
+c.1 <- 
+  lmBF(happiness ~ condition +
+         ResponseId + lab + lab:condition, 
+       whichRandom = c("ResponseId", "lab", "lab:condition"),
+       rscaleFixed = pr,
+       data = DF.l.inc,
+       iterations = it)
+
+c.0 <- 
+  lmBF(happiness ~ 1 +
+         ResponseId + lab + lab : condition, 
+       whichRandom = c("ResponseId", "lab", "lab:condition"), 
+       rscaleFixed = pr,
+       data = DF.l.inc,
+       iterations = it)
+
+c <- c.1 / c.0 # 46.94211 ±17.64% (there was a mistake in the script: c1/c1)
+```
+
+#### Image main effect
+```{r}
+i.1 <- 
+  lmBF(happiness ~ image +
+         ResponseId + lab + lab:image, 
+       whichRandom = c("ResponseId", "lab", "lab:image"),
+       rscaleFixed = pr,
+       data = DF.l.inc,
+       iterations = it)
+
+i.0 <- 
+  lmBF(happiness ~ 1 +
+         ResponseId + lab + lab:image, 
+       whichRandom = c("ResponseId", "lab", "lab:image"), 
+       rscaleFixed = pr,
+       data = DF.l.inc,
+       iterations = it)
+
+i <- i.1 / i.0 #1.250447 ±6.96%
+```
+
+#### Pose by image interaction
+```{r}
+pi.1 <- 
+  lmBF(happiness ~ trial + image + trial:image +
+         ResponseId + lab + lab:trial + lab:image + lab:trial:image,
+       whichRandom = c("ResponseId", "lab", 
+                       "lab:trial", "lab:image",
+                       "lab:trial:image"),
+       rscaleFixed = pr,
+       data = DF.l.inc,
+       iterations = it)
+
+pi.0 <- 
+  lmBF(happiness ~ trial + image +
+         ResponseId + lab + lab:trial + lab:image + lab:trial:image, 
+       whichRandom = c("ResponseId", "lab", 
+                       "lab:trial", "lab:image",
+                       "lab:trial:image"),
+       rscaleFixed = pr,
+       data = DF.l.inc,
+       iterations = it)
+
+pi <- pi.1 / pi.0
+```
+
+#### Pose by condition interaction
+```{r}
+pc.1 <- 
+  lmBF(happiness ~ trial + condition + trial:condition +
+         ResponseId + lab + lab:trial + lab:condition + lab:trial:condition,
+       whichRandom = c("ResponseId", "lab", 
+                       "lab:trial", "lab:condition",
+                       "lab:trial:condition"),
+       rscaleFixed = pr,
+       data = DF.l.inc,
+       iterations = it)
+
+pc.0 <- 
+  lmBF(happiness ~ trial + condition +
+         ResponseId + lab + lab:trial + lab:condition + lab:trial:condition, 
+       whichRandom = c("ResponseId", "lab", 
+                       "lab:trial", "lab:condition",
+                       "lab:trial:condition"),
+       rscaleFixed = pr,
+       data = DF.l.inc,
+       iterations = it)
+
+pc <- pc.1 / pc.0 # 100.1409 ±19.87%
+```
+
+#### Pose simple effects
+Facial mimicry
+```{r}
+p.1.m <- 
+  lmBF(happiness ~ trial +
+         ResponseId + lab + lab:trial, 
+       whichRandom = c("ResponseId", "lab", "lab:trial"),
+       rscaleFixed = pr,
+       data = subset(DF.l.inc, 
+                     condition == "mimicry"),
+       iterations = it)
+
+
+p.0.m <- 
+  lmBF(happiness ~ 1 +
+         ResponseId + lab + lab:trial, 
+       whichRandom = c("ResponseId", "lab", "lab:trial"), 
+       rscaleFixed = pr,
+       data = subset(DF.l.inc, 
+                     condition == "mimicry"),
+       iterations = it)
+
+p.m <- p.1.m / p.0.m # 916.6942 ±5.72%
+```
+
+Voluntary facial action task
+```{r}
+p.1.v <- 
+  lmBF(happiness ~ trial +
+         ResponseId + lab + lab:trial, 
+       whichRandom = c("ResponseId", "lab", "lab:trial"),
+       rscaleFixed = pr,
+       data = subset(DF.l.inc, 
+                     condition == "directd"),
+       iterations = it)
+
+
+p.0.v <- 
+  lmBF(happiness ~ 1 +
+         ResponseId + lab + lab:trial,
+       whichRandom = c("ResponseId", "lab", "lab:trial"), 
+       rscaleFixed = pr,
+       data = subset(DF.l.inc, 
+                     condition == "directd"),
+       iterations = it)
+
+p.v <- p.1.v / p.0.v # 39.2625 ±5.26%
+```
+
+Pen-in-mouth
+```{r}
+p.1.p <- 
+  lmBF(happiness ~ trial +
+         ResponseId + lab + lab:trial, 
+       whichRandom = c("ResponseId", "lab", "lab:trial"),
+       rscaleFixed = pr,
+       data = subset(DF.l.inc, 
+                     condition == "pentask"),
+       iterations = it)
+
+
+p.0.p <- 
+  lmBF(happiness ~ 1 +
+         ResponseId + lab + lab:trial, 
+       whichRandom = c("ResponseId", "lab", "lab:trial"), 
+       rscaleFixed = pr,
+       data = subset(DF.l.inc, 
+                     condition == "pentask"),
+       iterations = it)
+
+p.p <- p.1.p / p.0.p #0.1686719 (5.928672  for the null) ±7.85%
+```
+
+## Exploratory analyses
+### Pose by image interaction w/out random slopes
+```{r}
+exp.pi.1 <- 
+  lmBF(happiness ~ trial + image + trial:image +
+         ResponseId + lab,  
+       whichRandom = c("ResponseId", "lab"),
+       rscaleFixed = pr,
+       data = DF.l.inc,
+       iterations = it)
+
+
+exp.pi.0 <- 
+  lmBF(happiness ~ trial + image +
+         ResponseId + lab,  
+       whichRandom = c("ResponseId", "lab"),
+       rscaleFixed = pr,
+       data = DF.l.inc,
+       iterations = it)
+
+exp.pi <- exp.pi.1 / exp.pi.0 # 00.1436262 (6.962518 for the null) ±21.3%
+```
+
+### Pose by condition by image interaction w/out random slopes
+```{r}
+exp.pci.1 <- 
+  lmBF(happiness ~ trial + condition + image + 
+         trial:condition + trial:image + trial:condition +
+         trial:condition:image +
+         ResponseId + lab, 
+       whichRandom = c("ResponseId", "lab"),
+       rscaleFixed = pr,
+       data = DF.l.inc,
+       iterations = it)
+
+
+exp.pci.0 <- 
+  lmBF(happiness ~ trial + condition + image + 
+         trial:condition + trial:image + trial:condition +
+         ResponseId + lab, 
+       whichRandom = c("ResponseId", "lab"),
+       rscaleFixed = pr,
+       data = DF.l.inc,
+       iterations = it)
+
+exp.pci <- exp.pci.1 / exp.pci.0 # 2.158239 ±17.02%
+```
+
+### Image by condition interaction w/out random slopes
+```{r}
+exp.ci.1 <- 
+  lmBF(happiness ~ condition + image + condition:image +
+         ResponseId + lab,  
+       whichRandom = c("ResponseId", "lab"),
+       rscaleFixed = pr,
+       data = DF.l.inc,
+       iterations = it)
+
+
+exp.ci.0 <- 
+  lmBF(happiness ~ condition + image +
+         ResponseId + lab,  
+       whichRandom = c("ResponseId", "lab"),
+       rscaleFixed = pr,
+       data = DF.l.inc,
+       iterations = it)
+
+exp.ci <- exp.ci.1 / exp.ci.0
+```
+
+
+### Pen-in-mouth effect w/out random slopes  or  exclusions
+```{r}
+exp.p.1.p <- 
+  lmBF(happiness ~ trial +
+         ResponseId + lab, 
+       whichRandom = c("ResponseId", "lab"),
+       rscaleFixed = pr,
+       data = subset(DF.l, 
+                     condition == "pentask"),
+       iterations = it)
+
+exp.p.0.p <- 
+  lmBF(happiness ~ 1 +
+         ResponseId + lab, 
+       whichRandom = c("ResponseId", "lab"), 
+       rscaleFixed = pr,
+       data = subset(DF.l, 
+                     condition == "pentask"),
+       iterations = it)
+
+exp.p.p <- exp.p.1.p / exp.p.0.p # 442204.7 ±12.57%
+```
+
+### Pen-in-mouth effect w/out random slopes 
+```{r}
+exp2.p.1.p <- 
+  lmBF(happiness ~ trial +
+         ResponseId + lab, 
+       whichRandom = c("ResponseId", "lab"),
+       rscaleFixed = pr,
+       data = subset(DF.l.inc, 
+                     condition == "pentask"),
+       iterations = it)
+
+exp2.p.0.p <- 
+  lmBF(happiness ~ 1 +
+         ResponseId + lab, 
+       whichRandom = c("ResponseId", "lab"), 
+       rscaleFixed = pr,
+       data = subset(DF.l.inc, 
+                     condition == "pentask"),
+       iterations = it)
+
+exp2.p.p <- exp2.p.1.p / exp2.p.0.p
+```
+
+
+## Save output
+Models
+```{r}
+bayes.models <-
+  list(p.1 = p.1,
+       p.0 = p.0,
+       c.1 = c.1,
+       c.0 = c.0,
+       i.1 = i.1,
+       i.0 = i.0,
+       pc.1 = pc.1,
+       pc.0 = pc.0,
+       pi.1 = pi.1,
+       pi.0 = pi.0,
+       p.1.m = p.1.m,
+       p.0.m = p.0.m,
+       p.1.v = p.1.v,
+       p.0.v = p.0.v,
+       p.1.p = p.1.p,
+       p.0.p = p.0.p,
+       exp.pi.1 = exp.pi.1,
+       exp.pi.0 = exp.pi.0,
+       exp.pci.1 = exp.pci.1,
+       exp.pci.0 = exp.pci.0,
+       exp.ci.1 = exp.ci.1,
+       exp.ci.0 = exp.ci.0,
+       exp.p.1.p = exp.p.1.p,
+       exp.p.0.p = exp.p.0.p,
+       exp2.p.1.p = exp2.p.1.p,
+       exp2.p.0.p = exp2.p.0.p)
+
+saveRDS(bayes.models, 
+        file = paste0("output/analyses/",
+                      "bayes.models.",
+                      pr,
+                      ".Rds")
+        )
+```
+
+Output
+```{r}
+output <- 
+  c(p@bayesFactor$bf, 
+    c@bayesFactor$bf, 
+    i@bayesFactor$bf, 
+    pc@bayesFactor$bf, 
+    pi@bayesFactor$bf,
+    p.m@bayesFactor$bf, 
+    p.v@bayesFactor$bf, 
+    p.p@bayesFactor$bf, 
+    exp.pi@bayesFactor$bf, 
+    exp.pci@bayesFactor$bf,
+    exp.ci@bayesFactor$bf,
+    exp.p.p@bayesFactor$bf,
+    exp2.p.p@bayesFactor$bf)
+
+write.table(t(round(exp(output), 2)),
+            file = paste0("output/analyses/",
+                          "BayesFactor.",
+                          pr,
+                          ".txt"),
+            quote = F,
+            col.names = F,
+            row.names = F,
+            append = T)
+```
+
+Image
+```{r FALSE}
+save.image(paste0("BayesFactorAnalyses",
+                  pr,
+                  ".RData")
+           )
+```
+

@@ -102,6 +102,7 @@ DF.l.inc$ResponseId %>% unique() %>% length()
 Create list to save models in
 ```{r}
 models <- list()
+# models <- readRDS("output/analyses/freq.models.Rds")
 ```
 
 ### Primary analyses
@@ -133,6 +134,14 @@ joint_tests(models[["primary"]][["prereg"]],
 
 # descriptives
 emmeans(models[["primary"]][["prereg"]],
+        pairwise ~ image,
+        adjust = "none")
+
+emmeans(models[["primary"]][["prereg"]],
+        pairwise ~ trial,
+        adjust = "none")
+
+emmeans(models[["primary"]][["prereg"]],
         pairwise ~ trial | condition,
         adjust = "none")
 
@@ -163,6 +172,18 @@ emmeans(models[["primary"]][["prereg.noRS"]],
 
 ### Secondary analyses
 #### Do Participants Report Experiencing More Happiness During the Smiling vs. Filler Trials?
+Create temp dataset
+```{r}
+tmp.DF <- DF.l.full.inc %>% 
+  filter(trial != "neutr") %>% 
+  mutate(trial.r = if_else(condition = trial == "happy",
+                           true = "happy",
+                           false = "filler")
+         ) %>% 
+  mutate(trial.r = factor(trial.r))
+```
+
+
 ##### With random slopes
 ```{r}
 # fit model
@@ -188,8 +209,10 @@ joint_tests(models[["secondary"]][["alt.exp"]],
             lmerTest.limit = 9999)
 
 emmeans(models[["secondary"]][["alt.exp"]], 
-        pairwise ~ trial.r | condition | image,
-        adjust = "none")
+        pairwise ~ trial.r | condition,
+        at = list(image = "absentt"),
+        adjust = "none",
+        lmerTest.limit = 4512)
 ```
 
 ##### Without random slopes
@@ -229,9 +252,12 @@ models[["secondary"]][["compl.diff"]] <-
        data = DF.w)
 
 # inspect results
+anova(models[["secondary"]][["compl.diff"]])
+
 emmeans(models[["secondary"]][["compl.diff"]], 
         pairwise ~ condition,
-        adjust = "none")
+        adjust = "none",
+        pbkrtest.limit = 3878)
 
 DF.w %>% 
   group_by(condition) %>% 
@@ -272,7 +298,8 @@ anova(models[["secondary"]][["simil.diff"]])
 
 emmeans(models[["secondary"]][["simil.diff"]], 
         pairwise ~ condition,
-        adjust = "none")
+        adjust = "none",
+        lmerTest.limit = 3878)
 
 DF.w %>% 
   group_by(condition) %>% 
@@ -322,7 +349,8 @@ anova(models[["secondary"]][["gen.diff"]])
 
 emmeans(models[["secondary"]][["gen.diff"]], 
         pairwise ~ condition,
-        adjust = "none")
+        adjust = "none",
+        lmerTest.limit = 3878)
 
 DF.w %>% 
   group_by(condition) %>% 
@@ -486,28 +514,13 @@ anova(models[["secondary"]][["anxiety"]])
 
 emmeans(models[["secondary"]][["anxiety"]], 
         pairwise ~ condition,
-        adjust = "none")
+        adjust = "none",
+        lmerTest.limit = 3008)
 
 DF.l.inc %>% 
   group_by(trial) %>% 
   summarise(m = mean(anxiety),
             sd = sd(anxiety))
-
-# no RS
-tmp <-  lmer(anxiety ~ trial * condition * image +
-         (1 | lab) + (1 | ResponseId),
-         data = DF.l.inc)
-
-anova(tmp)
-
-emmeans(tmp, 
-        pairwise ~ condition,
-        adjust = "none")
-
-# no RS or inclusion
-lmer(anxiety ~ trial * condition * image +
-         (1 | lab) + (1 | ResponseId),
-         data = DF.l) %>% summary()
 ```
 
 ##### Without random slopes
@@ -547,7 +560,8 @@ anova(models[["secondary"]][["anger"]])
 
 emmeans(models[["secondary"]][["anger"]], 
         pairwise ~ condition,
-        adjust = "none")
+        adjust = "none",
+        lmerTest.limit = 3008)
 ```
 
 
@@ -587,9 +601,8 @@ models[["secondary"]][["compl.mod"]] <-
        data = DF.l.inc)
 
 # inspect results
-summary(models[["secondary"]][["quality.rating"]])
-confint(models[["secondary"]][["quality.rating"]])
-anova(models[["secondary"]][["quality.rating"]])
+summary(models[["secondary"]][["compl.mod"]])
+anova(models[["secondary"]][["compl.mod"]])
 ```
 
 ###### Without random slopes
@@ -603,7 +616,6 @@ models[["secondary"]][["compl.mod.noRS"]] <-
 
 # inspect results
 summary(models[["secondary"]][["compl.mod.noRS"]])
-confint(models[["secondary"]][["compl.mod.noRS"]])
 anova(models[["secondary"]][["compl.mod.noRS"]])
 ```
 
@@ -625,9 +637,8 @@ models[["secondary"]][["simil.mod"]] <-
        data = DF.l.inc)
 
 # inspect results
-summary(models[["secondary"]][["simil.rating"]])
-confint(models[["secondary"]][["simil.rating"]])
-anova(models[["secondary"]][["simil.rating"]])
+summary(models[["secondary"]][["simil.mod"]])
+anova(models[["secondary"]][["simil.mod"]])
 ```
 
 ###### Without random slopes
@@ -641,7 +652,6 @@ models[["secondary"]][["simil.mod.noRS"]] <-
 
 # inspect results
 summary(models[["secondary"]][["simil.mod.noRS"]])
-confint(models[["secondary"]][["simil.mod.noRS"]])
 anova(models[["secondary"]][["simil.mod.noRS"]])
 ```
 
@@ -729,6 +739,28 @@ summary(models[["exploratory"]][["hap.anx"]])
 anova(models[["exploratory"]][["hap.anx"]])
 ```
 
+#### Primary analyses without random slopes and incluuding all participants
+```{r}
+models[["exploratory"]][["primary.noexc"]] <-
+  lmer(happiness ~ trial * condition * image +
+         (1 | lab) + (1 | ResponseId),
+       data = DF.l)
+
+# inspect results
+summary(models[["exploratory"]][["primary.noexc"]])
+
+anova(models[["exploratory"]][["primary.noexc"]])
+
+joint_tests(models[["exploratory"]][["primary.noexc"]],
+            by = "condition",
+            lmerTest.limit = 9999)
+
+# descriptives
+emmeans(models[["exploratory"]][["primary.noexc"]],
+        pairwise ~ trial | condition,
+        adjust = "none")
+```
+
 #### Primary analyses excluding anxious participants
 Filter data, fit model, inspect results
 ```{r}
@@ -757,7 +789,7 @@ joint_tests(models[["exploratory"]][["no.anx"]],
 rm(DF.inc.no.anx)
 ```
 
-### Group differences in other inclusion criteria
+## Group differences in other inclusion criteria
 Prep dataframe
 ```{r}
 DF.w <- DF.w %>% 
@@ -767,8 +799,8 @@ DF.w <- DF.w %>%
 library(car)
 ```
 
-#### Computer check
-##### With random slopes
+### Computer check
+#### With random slopes
 ```{r}
 # fit model
 models[["secondary"]][["cpu.diff"]] <-
@@ -783,7 +815,7 @@ models[["secondary"]][["cpu.diff"]] <-
 Anova(models[["secondary"]][["cpu.diff"]])
 ```
 
-##### Without random slopes
+#### Without random slopes
 ```{r}
 # fit model
 models[["secondary"]][["cpu.diff.noRS"]] <-
@@ -796,8 +828,8 @@ models[["secondary"]][["cpu.diff.noRS"]] <-
 Anova(models[["secondary"]][["cpu.diff.noRS"]])
 ```
 
-#### Attention check
-##### With random slopes
+### Attention check
+#### With random slopes
 ```{r}
 # fit model
 models[["secondary"]][["att.diff"]] <-
@@ -809,10 +841,10 @@ models[["secondary"]][["att.diff"]] <-
         family = binomial)
 
 # examine results
-Anova(tmp)
+Anova(models[["secondary"]][["att.diff"]])
 ```
 
-##### Without random slopes
+#### Without random slopes
 ```{r}
 # fit model
 models[["secondary"]][["att.diff.noRS"]] <-
@@ -825,8 +857,8 @@ models[["secondary"]][["att.diff.noRS"]] <-
 Anova(tmp)
 ```
 
-#### Distraction
-##### With random slopes
+### Distraction
+#### With random slopes
 ```{r}
 # fit model
 models[["secondary"]][["dis.diff"]] <-
@@ -840,7 +872,7 @@ models[["secondary"]][["dis.diff"]] <-
 anova(models[["secondary"]][["dis.diff"]])
 ```
 
-##### Without random slopes
+#### Without random slopes
 ```{r}
 # fit model
 models[["secondary"]][["dis.diff.noRS"]] <-
