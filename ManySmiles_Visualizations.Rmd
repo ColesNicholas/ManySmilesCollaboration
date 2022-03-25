@@ -514,3 +514,55 @@ ggplot(data = meta.DF,
 dev.off()
 rm(meta.DF)
 ```
+
+
+## Supplemental Figure 3
+```{r}
+DF.s3 <- DF.l.inc %>% 
+  
+  # select relevant variables
+  select(ResponseId, lab, 
+         condition, 
+         trial, happiness) %>%
+  
+  # pivot wider
+  pivot_wider(#id_cols = ResponseId,
+              names_from = trial,
+              values_from = happiness) %>% 
+  
+  # compute difference score
+  rowwise() %>% 
+  mutate(happ.diff = happy - neutral,
+         eff = if_else(condition = happ.diff > 0,
+                       true = 1,
+                       false = 0)) %>% 
+  ungroup()
+
+# calculate proportion of positive effect participants in each group
+desc <- DF.s3 %>% 
+  group_by(condition) %>% 
+  summarise(prop = round(mean(happ.diff),2) * 100) %>% 
+  mutate(prop = paste0(prop, "%"))
+
+# combine descriptive statistic with dataframe
+tmp <-  
+  merge(DF.s3, desc) 
+
+ggplot(data = DF.s3, 
+       aes(x = happ.diff)) +
+  geom_density() +
+  facet_wrap(vars(condition)) +
+  geom_text(data = desc,
+            aes(label = 
+                  paste0(prop,
+                         " positive scores")),
+            x = -3,
+            y = 1.8,
+            size = 3) +
+  labs(x = "difference in self-reported happiness between happy and neutral facial expression poses")
+
+
+
+  
+```
+
