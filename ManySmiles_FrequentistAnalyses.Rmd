@@ -962,6 +962,19 @@ models[["secondary"]][["dis.diff.noRS"]] <-
 anova(models[["secondary"]][["dis.diff.noRS"]])
 ```
 
+### How much variability in happiness does facial feedback account for?
+```{r}
+tmp.DF <- DF.l.inc %>% 
+  filter(condition != "pentask")
+
+lmer(happiness ~ trial +
+       (1 | lab) + (1 | ResponseId),
+     data = DF.l.inc,
+     subset = condition != "pentask") %>% 
+  performance::r2()
+```
+
+
 ## Save output
 ```{r}
 write_rds(models, "output/analyses/freq.models.Rds")

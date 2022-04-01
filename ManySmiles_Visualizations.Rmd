@@ -135,7 +135,6 @@ DF.l.inc <- DF.l.inc %>%
          )
 ```
 
-
 ## Figure 2
 ```{r}
 f2.DF <- DF.l.full %>%
@@ -544,9 +543,12 @@ desc <- DF.s3 %>%
   summarise(prop = round(mean(happ.diff),2) * 100) %>% 
   mutate(prop = paste0(prop, "%"))
 
-# combine descriptive statistic with dataframe
-tmp <-  
-  merge(DF.s3, desc) 
+# plot
+png(filename = "output/figures/SuppFigure3.png", 
+    units = "in", 
+    width = 7, 
+    height = 4, 
+    res = 300)
 
 ggplot(data = DF.s3, 
        aes(x = happ.diff)) +
@@ -556,13 +558,13 @@ ggplot(data = DF.s3,
             aes(label = 
                   paste0(prop,
                          " positive scores")),
-            x = -3,
+            x = -2.5,
             y = 1.8,
-            size = 3) +
-  labs(x = "difference in self-reported happiness between happy and neutral facial expression poses")
+            size = 2.5) +
+  labs(x = "happiness difference score")
 
+dev.off()
 
-
-  
+rm(DF.s3, desc)
 ```
 
