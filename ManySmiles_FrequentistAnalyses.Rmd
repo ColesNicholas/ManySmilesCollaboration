@@ -514,7 +514,7 @@ models[["secondary"]][["awareness.mod.noRS"]] %>% summary()
 # fit model
 models[["secondary"]][["body.aware.mod"]] <- 
   lmer(happiness ~ 
-         trial * condition * image + indiv_body + trial : indiv_body +
+         trial * condition * image + indiv_body.c + trial : indiv_body +
          (1 | lab) + (1 | ResponseId) + 
          (0 + trial | lab) +
          (0 + condition | lab)  +
@@ -532,7 +532,7 @@ models[["secondary"]][["body.aware.mod"]] %>% summary()
 # fit model
 models[["secondary"]][["body.aware.mod.noRS"]] <- 
   lmer(happiness ~ 
-         trial * condition * image + indiv_body + trial : indiv_body +
+         trial * condition * image + indiv_body.c + trial : indiv_body +
          (1 | lab) + (1 | ResponseId),
        data = DF.l.inc)
 

@@ -496,8 +496,8 @@ DF.l <- DF.l %>%
   ungroup() %>% 
   
   # mean center body awareness and difficulty variable (for later moderator analyses)
-  mutate(indiv_body = indiv_body - mean(indiv_body,
-                                        na.rm = T))
+  mutate(indiv_body.c = indiv_body - mean(indiv_body,
+                                          na.rm = T))
 ```
 
 #### Sort columns and rows to improve readability
@@ -525,7 +525,7 @@ DF.l <- DF.l %>%
     qulty_rate_var.c, qulty_feel_var.c, qulty_smlr_var.c, dq1,
     
     # demographics
-    indiv_gend_var, indiv_agee_var, indiv_body, inc
+    indiv_gend_var, indiv_agee_var, indiv_body, indiv_body, inc
     )
 ```
 
