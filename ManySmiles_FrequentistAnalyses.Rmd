@@ -671,6 +671,10 @@ models[["secondary"]][["compl.mod"]] <-
 # inspect results
 summary(models[["secondary"]][["compl.mod"]])
 anova(models[["secondary"]][["compl.mod"]])
+
+emmeans(models[["secondary"]][["compl.mod"]], 
+        pairwise ~ trial,
+        adjust = "none")
 ```
 
 ###### Without random slopes
@@ -891,6 +895,14 @@ models[["secondary"]][["cpu.diff"]] <-
 
 # examine results
 Anova(models[["secondary"]][["cpu.diff"]])
+
+DF.w %>% 
+  group_by(condition) %>% 
+  summarise(m = mean(inc.dev))
+
+DF.w %>% 
+  group_by(image) %>% 
+  summarise(m = mean(inc.dev))
 ```
 
 #### Without random slopes
@@ -920,6 +932,14 @@ models[["secondary"]][["att.diff"]] <-
 
 # examine results
 Anova(models[["secondary"]][["att.diff"]])
+
+DF.w %>% 
+  group_by(condition) %>% 
+  summarise(m = mean(inc.att))
+
+DF.w %>% 
+  group_by(image) %>% 
+  summarise(m = mean(inc.att))
 ```
 
 #### Without random slopes
@@ -948,6 +968,20 @@ models[["secondary"]][["dis.diff"]] <-
 
 # inspect results
 anova(models[["secondary"]][["dis.diff"]])
+
+DF.w %>% 
+  group_by(condition) %>% 
+  summarise(m = mean(distraction,
+                     na.rm= T),
+            sd = sd(distraction,
+                    na.rm = T))
+
+DF.w %>% 
+  group_by(image) %>% 
+  summarise(m = mean(distraction,
+                     na.rm= T),
+            sd = sd(distraction,
+                    na.rm = T))
 ```
 
 #### Without random slopes

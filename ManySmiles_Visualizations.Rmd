@@ -165,12 +165,17 @@ ggline(f2.DF,
   theme(strip.background = element_rect(fill = "gray35"),
         strip.text =element_text(colour = "white"),
         panel.border = element_blank(),
-        legend.position= "top")
+        legend.position= "top") + 
+  scale_y_continuous(limits = c(1, 7),
+                     breaks = seq(1, 7, 
+                                  by = 2))
 
 dev.off()
 
 rm(f2.DF)
 ```
+
+## Figure 3
 
 ## Supplemental Figure 2
 Reformat DF.l.inc to make the code a little cleaner
@@ -525,23 +530,32 @@ DF.s3 <- DF.l.inc %>%
          trial, happiness) %>%
   
   # pivot wider
-  pivot_wider(#id_cols = ResponseId,
-              names_from = trial,
+  pivot_wider(names_from = trial,
               values_from = happiness) %>% 
   
   # compute difference score
   rowwise() %>% 
   mutate(happ.diff = happy - neutral,
          eff = if_else(condition = happ.diff > 0,
-                       true = 1,
-                       false = 0)) %>% 
+                       true = "pos",
+                       false = if_else(condition = happ.diff == 0,
+                                       true = "nil",
+                                       false = "neg")
+                       )
+         ) %>% 
   ungroup()
+
+DF.s3$eff
 
 # calculate proportion of positive effect participants in each group
 desc <- DF.s3 %>% 
-  group_by(condition) %>% 
-  summarise(prop = round(mean(happ.diff),2) * 100) %>% 
-  mutate(prop = paste0(prop, "%"))
+  group_by(condition, eff) %>% 
+  summarise(n = n()) %>%
+  mutate(freq = (n / sum(n)) * 100,
+         freq_str = paste0(round(freq, 0), "%")) %>%
+  select(-c(n, freq)) %>% 
+  pivot_wider(names_from = eff,
+              values_from = freq_str)
 
 # plot
 png(filename = "output/figures/SuppFigure3.png", 
@@ -552,14 +566,17 @@ png(filename = "output/figures/SuppFigure3.png",
 
 ggplot(data = DF.s3, 
        aes(x = happ.diff)) +
-  geom_density() +
+  geom_histogram(bins = 36) +
   facet_wrap(vars(condition)) +
   geom_text(data = desc,
             aes(label = 
-                  paste0(prop,
-                         " positive scores")),
+                  paste0(pos,
+                         " positive scores",
+                         "\n",
+                         neg,
+                         " negative scoes")),
             x = -2.5,
-            y = 1.8,
+            y = 250,
             size = 2.5) +
   labs(x = "happiness difference score")
 
