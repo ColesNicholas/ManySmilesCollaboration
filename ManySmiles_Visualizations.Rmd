@@ -176,6 +176,98 @@ rm(f2.DF)
 ```
 
 ## Figure 3
+```{r}
+DF.3 <- DF.l %>% 
+  # select relevant variables
+  select(ResponseId, trial, condition, 
+         happiness, 
+         awareness, qulty_rate_var, 
+         qulty_feel_var, qulty_smlr_var, 
+         indiv_body) %>% 
+  
+  # calculate a difference score between the happy and neutral poses
+  pivot_wider(names_from = trial,
+              values_from = happiness) %>%
+  rowwise() %>% 
+  mutate(happ.diff = happy - neutral) %>% 
+  ungroup() %>%
+  select(-c(happy, neutral))
+
+# plot
+f1 <- ggplot(DF.3, 
+             aes(x = qulty_rate_var, 
+                 y = happ.diff))  + 
+  geom_jitter(width = .1, 
+              alpha = .2,
+              colour = "dark grey") +
+  geom_smooth(method = 'lm') +
+  xlab("compliance") +
+  ylab("change in happiness") + 
+  scale_x_continuous(
+    breaks = c(1, 3, 5, 7))
+
+f2 <- ggplot(DF.3, 
+             aes(x = qulty_smlr_var, 
+                 y = happ.diff))  + 
+  geom_jitter(width = .1, 
+              alpha = .2,
+              colour = "dark grey") +
+  geom_smooth(method = 'lm') +
+  theme(axis.title.y = element_blank(),
+        axis.line.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  xlab("similarity")+ 
+  scale_x_continuous(
+    breaks = c(1, 3, 5, 7))
+
+f3 <- ggplot(DF.3, 
+             aes(x = qulty_feel_var, 
+                 y = happ.diff))  + 
+  geom_jitter(width = .1, 
+              alpha = .2,
+              colour = "dark grey") +
+  geom_smooth(method = 'lm') +
+  theme(axis.title.y = element_blank(),
+        axis.line.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  xlab("genuineness")+ 
+  scale_x_continuous(
+    breaks = c(1, 3, 5, 7))
+
+f4 <- ggplot(DF.3, 
+             aes(x = awareness, 
+                 y = happ.diff))  + 
+  geom_jitter(width = .1, 
+              alpha = .2,
+              colour = "dark grey") +
+  geom_smooth(method = 'lm') +
+  xlab("hypothesis awareness") +
+  ylab("change in happiness") + 
+  scale_x_continuous(
+    breaks = c(1, 3, 5, 7))
+
+f5 <- ggplot(DF.3, 
+             aes(x = indiv_body, 
+                 y = happ.diff))  + 
+  geom_jitter(width = .1, 
+              alpha = .2,
+              colour = "dark grey") +
+  geom_smooth(method = 'lm') +
+  theme(axis.title.y = element_blank(),
+        axis.line.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  xlab("body awareness")+ 
+  scale_x_continuous(
+    breaks = c(1, 3, 5, 7))
+
+library("gridExtra")
+grid.arrange(f1, f2, f3, f4, f5,
+             nrow = 2)
+```
+
 
 ## Supplemental Figure 2
 Reformat DF.l.inc to make the code a little cleaner
