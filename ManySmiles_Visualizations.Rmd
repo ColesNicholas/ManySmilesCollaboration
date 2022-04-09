@@ -21,7 +21,7 @@ rm(list = ls())
 
   # vector of necessary packages
   packages <- c('tidyverse', 'ggplot2', 'ggtext', 'metafor',
-                'ggpubr')
+                'ggpubr', "gridExtra")
   
   # using vector of packages, call ipak function
   Ipak(packages)
@@ -193,7 +193,7 @@ DF.3 <- DF.l %>%
   ungroup() %>%
   select(-c(happy, neutral))
 
-# plot
+# prepare plots
 f1 <- ggplot(DF.3, 
              aes(x = qulty_rate_var, 
                  y = happ.diff))  + 
@@ -263,9 +263,19 @@ f5 <- ggplot(DF.3,
   scale_x_continuous(
     breaks = c(1, 3, 5, 7))
 
-library("gridExtra")
+# plot
+png(filename = "output/figures/Figure3.png", 
+    units = "in", 
+    width = 7, 
+    height = 6, 
+    res = 300)
+
 grid.arrange(f1, f2, f3, f4, f5,
              nrow = 2)
+
+dev.off()
+
+rm(f1, f2, f3, f4, f5, DF.3)
 ```
 
 
