@@ -835,7 +835,7 @@ joint_tests(models[["exploratory"]][["primary.noexc"]],
 # descriptives
 emmeans(models[["exploratory"]][["primary.noexc"]],
         pairwise ~ trial | condition,
-        adjust = "none")
+        adjust = "none") %>% confint
 
 (.14 / (7-1)) * 100 #  pen pose effect
 ```
