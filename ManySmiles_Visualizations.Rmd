@@ -37,10 +37,17 @@ options(contrasts = c('contr.sum', 'contr.poly'))
 
 # set plotting options 
 theme_set(theme_classic() +
-          theme(strip.background = element_rect(fill = "gray35"),
+          theme(strip.background = element_rect(fill = "gray35",
+                                                size = .35),
                 strip.text =element_text(colour = "white"),
                 panel.border = element_blank(),
-                legend.position = "none"
+                legend.position = "none",
+                axis.title = element_text(size = 6),
+                axis.text = element_text(size = 5),
+                axis.line = element_line(size = .25),
+                axis.ticks = element_line(size = .25),
+                strip.text.x = element_text(size = 5),
+                strip.text.y = element_text(size = 5)
                 )
           )
 ```
@@ -149,26 +156,50 @@ f2.DF <- DF.l.full %>%
                         `filler 1`  = "filler",
                         `filler 2`  = "filler"))
 
-png(filename = "output/figures/Figure2.png", 
-    units = "in", 
-    width = 7, 
-    height = 4, 
-    res = 300)
+pdf(file = "output/figures/Figure2.pdf", 
+    width = 3.46, 
+    height = 3.46)
 
-ggline(f2.DF, 
-       x = "trial", y = "happiness", 
-       add = c("mean_se"),
-       facet.by = "condition",
-       color = "image",
-       palette = "jco") +
-  theme_classic() +
-  theme(strip.background = element_rect(fill = "gray35"),
-        strip.text =element_text(colour = "white"),
-        panel.border = element_blank(),
-        legend.position= "top") + 
-  scale_y_continuous(limits = c(1, 7),
-                     breaks = seq(1, 7, 
-                                  by = 2))
+ggplot(f2.DF, 
+       aes(x = trial, 
+           y = happiness)) +
+  # split plot by image and condition
+  facet_grid(rows = vars(image),
+             cols = vars(condition)) +
+  
+  # add jittered raw data
+  geom_jitter(width = .1, 
+              alpha = .15,
+              size = .25,
+              colour = "dark grey") + 
+  
+  # connect participants' jittered raw data
+  # geom_line(alpha = .07, 
+  #           size = .7,
+  #           aes(group = ResponseId),
+  #           colour = "dark grey") +
+  # 
+  # add summary lines
+  stat_summary(geom = "line",
+               colour = "#3366FF",
+               size = .22,
+               aes(group = 1)) +
+  
+  stat_summary(colour = "#3366FF", 
+               size = .25,
+               width = .10,
+               fun.data = mean_se,
+               geom = "errorbar") +
+  
+  # adjust scales
+  scale_x_discrete(
+    expand = expand_scale(mult = c(.2, .2))) +
+  
+  scale_y_continuous(
+    breaks = c(1, 3, 5, 7)) +
+  
+  labs(y = "Self-reported happiness", 
+     x = "Task")
 
 dev.off()
 
@@ -198,9 +229,11 @@ f1 <- ggplot(DF.3,
              aes(x = qulty_rate_var, 
                  y = happ.diff))  + 
   geom_jitter(width = .1, 
-              alpha = .2,
+              alpha = .15,
+              size = .25,
               colour = "dark grey") +
-  geom_smooth(method = 'lm') +
+  geom_smooth(method = 'lm',
+              size = .25) +
   xlab("compliance") +
   ylab("change in happiness") + 
   scale_x_continuous(
@@ -210,9 +243,11 @@ f2 <- ggplot(DF.3,
              aes(x = qulty_smlr_var, 
                  y = happ.diff))  + 
   geom_jitter(width = .1, 
-              alpha = .2,
+              alpha = .15,
+              size = .25,
               colour = "dark grey") +
-  geom_smooth(method = 'lm') +
+  geom_smooth(method = 'lm',
+              size = .25) +
   theme(axis.title.y = element_blank(),
         axis.line.y = element_blank(),
         axis.text.y = element_blank(),
@@ -225,9 +260,11 @@ f3 <- ggplot(DF.3,
              aes(x = qulty_feel_var, 
                  y = happ.diff))  + 
   geom_jitter(width = .1, 
-              alpha = .2,
-              colour = "dark grey") +
-  geom_smooth(method = 'lm') +
+              alpha = .15,
+              size = .25,
+              colour = "dark grey")+
+  geom_smooth(method = 'lm',
+              size = .25) +
   theme(axis.title.y = element_blank(),
         axis.line.y = element_blank(),
         axis.text.y = element_blank(),
@@ -240,9 +277,11 @@ f4 <- ggplot(DF.3,
              aes(x = awareness, 
                  y = happ.diff))  + 
   geom_jitter(width = .1, 
-              alpha = .2,
+              alpha = .15,
+              size = .25,
               colour = "dark grey") +
-  geom_smooth(method = 'lm') +
+  geom_smooth(method = 'lm',
+              size = .25) +
   xlab("hypothesis awareness") +
   ylab("change in happiness") + 
   scale_x_continuous(
@@ -252,9 +291,11 @@ f5 <- ggplot(DF.3,
              aes(x = indiv_body, 
                  y = happ.diff))  + 
   geom_jitter(width = .1, 
-              alpha = .2,
+              alpha = .15,
+              size = .25,
               colour = "dark grey") +
-  geom_smooth(method = 'lm') +
+  geom_smooth(method = 'lm',
+              size = .25) +
   theme(axis.title.y = element_blank(),
         axis.line.y = element_blank(),
         axis.text.y = element_blank(),
@@ -264,11 +305,9 @@ f5 <- ggplot(DF.3,
     breaks = c(1, 3, 5, 7))
 
 # plot
-png(filename = "output/figures/Figure3.png", 
-    units = "in", 
-    width = 7, 
-    height = 6, 
-    res = 300)
+pdf(file = "output/figures/Figure3.pdf", 
+    width = 3.46, 
+    height = 3.46)
 
 grid.arrange(f1, f2, f3, f4, f5,
              nrow = 2)
