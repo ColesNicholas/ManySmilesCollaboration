@@ -21,7 +21,10 @@ rm(list = ls())
 
   # vector of necessary packages
   packages <- c('tidyverse', 'ggplot2', 'ggtext', 'metafor',
-                'ggpubr', "gridExtra")
+                'ggpubr', "gridExtra",
+                "sf", "rnaturalearth", "rnaturalearthdata",
+                "ggspatial"
+                )
   
   # using vector of packages, call ipak function
   Ipak(packages)
@@ -140,6 +143,54 @@ DF.l.inc <- DF.l.inc %>%
                         absentt = "positive stimuli absent",
                         present = "positive stimuli present")
          )
+```
+
+## Figure 1
+```{r}
+# download world data
+world <- ne_countries(scale = "medium", 
+                      returnclass = "sf")
+
+# download msc country data
+msc <- read.csv("data/country.n.csv")[, 2:3] %>% 
+  arrange(n) %>% 
+  rename(iso_a3 = country)
+
+# merge datasets
+msworld <- left_join(world, msc,
+                     by = 'iso_a3') %>%
+  mutate(n = ifelse(is.na(n),
+                    0,
+                    n)) %>% 
+  arrange(-n)
+
+# plot data
+pdf(file = "output/figures/Figure1.pdf", 
+    width = 3.46, 
+    height = 3.46)
+
+ggplot() +
+  layer_spatial(data = msworld,
+                aes(fill = n),
+                color = NA)+
+  coord_sf(crs = 'ESRI:54030') +
+  scale_fill_gradient(low = '#D0CECE',
+                      high = "#820000") +
+  cowplot::theme_minimal_grid() +
+  theme(legend.position = 'top',
+        legend.title = element_blank(),
+        legend.text = element_text(size = 5),
+        legend.key.width= unit(1.55, 'cm'),
+        legend.key.height= unit(.1, 'cm'),
+        legend.margin = margin(b = -10),
+        legend.justification = "center",
+        axis.ticks = element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        panel.grid.major = element_line(size = .2))
+
+dev.off()
+
+rm(msc, msworld, world)
 ```
 
 ## Figure 2
