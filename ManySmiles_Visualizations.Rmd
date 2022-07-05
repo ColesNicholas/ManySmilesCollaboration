@@ -162,6 +162,7 @@ msworld <- left_join(world, msc,
   mutate(n = ifelse(is.na(n),
                     0,
                     n)) %>% 
+  select(iso_a3, n) %>% 
   arrange(-n)
 
 # plot data
@@ -178,9 +179,9 @@ ggplot() +
                       high = "#820000") +
   cowplot::theme_minimal_grid() +
   theme(legend.position = 'top',
-        legend.title = element_blank(),
+        legend.title = element_text(size = 7),
         legend.text = element_text(size = 5),
-        legend.key.width= unit(1.55, 'cm'),
+        legend.key.width= unit(1.4, 'cm'),
         legend.key.height= unit(.1, 'cm'),
         legend.margin = margin(b = -10),
         legend.justification = "center",
@@ -189,6 +190,10 @@ ggplot() +
         panel.grid.major = element_line(size = .2))
 
 dev.off()
+
+write.csv(x = msc,
+          file = "data/source/Fig1_Source.csv",
+          row.names = F)
 
 rm(msc, msworld, world)
 ```
@@ -201,6 +206,9 @@ f2.DF <- DF.l.full %>%
   filter(inc == 1,
          inc.awa == 1) %>% 
   
+  # select relevant variables
+  select(ResponseId, trial, happiness,
+         image, condition) %>% 
   
   # recode trial
   mutate(trial = recode(trial,
@@ -224,13 +232,6 @@ ggplot(f2.DF,
               size = .25,
               colour = "dark grey") + 
   
-  # connect participants' jittered raw data
-  # geom_line(alpha = .07, 
-  #           size = .7,
-  #           aes(group = ResponseId),
-  #           colour = "dark grey") +
-  # 
-  # add summary lines
   stat_summary(geom = "line",
                colour = "#3366FF",
                size = .22,
@@ -254,6 +255,10 @@ ggplot(f2.DF,
 
 dev.off()
 
+write.csv(x = f2.DF,
+          file = "data/source/Fig2_Source.csv",
+          row.names = F)
+
 rm(f2.DF)
 ```
 
@@ -273,7 +278,7 @@ DF.3 <- DF.l %>%
   rowwise() %>% 
   mutate(happ.diff = happy - neutral) %>% 
   ungroup() %>%
-  select(-c(happy, neutral))
+  select(-c(happy, neutral, ResponseId))
 
 # prepare plots
 f1 <- ggplot(DF.3, 
@@ -365,9 +370,12 @@ grid.arrange(f1, f2, f3, f4, f5,
 
 dev.off()
 
+write.csv(x = DF.3,
+          file = "data/source/Fig3_Source.csv",
+          row.names = F)
+
 rm(f1, f2, f3, f4, f5, DF.3)
 ```
-
 
 ## Supplemental Figure 2
 Reformat DF.l.inc to make the code a little cleaner
