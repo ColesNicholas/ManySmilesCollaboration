@@ -135,19 +135,19 @@ joint_tests(models[["primary"]][["prereg"]],
 # descriptives
 emmeans(models[["primary"]][["prereg"]],
         pairwise ~ image,
-        adjust = "none")
+        adjust = "none") %>% confint()
 
 (.3 / (7-1)) * 100 #  image effect size
 
 emmeans(models[["primary"]][["prereg"]],
         pairwise ~ trial,
-        adjust = "none")
+        adjust = "none") %>% confint()
 
 (.31 / (7-1)) * 100 #  pose effect size
 
 emmeans(models[["primary"]][["prereg"]],
         pairwise ~ trial | condition,
-        adjust = "none")
+        adjust = "none") %>% confint()
 
 (.49 / (7-1)) * 100 #  mimicry pose effect size
 (.40 / (7-1)) * 100 #  directd pose effect size
@@ -174,7 +174,7 @@ joint_tests(models[["primary"]][["prereg.noRS"]],
 # descriptives
 emmeans(models[["primary"]][["prereg.noRS"]],
         pairwise ~ trial | condition,
-        adjust = "none")
+        adjust = "none") %>% confint()
 
 (.08 / (7-1)) * 100 #  pen pose effect
 ```
@@ -222,7 +222,7 @@ emmeans(models[["secondary"]][["alt.exp"]],
         pairwise ~ trial.r | condition,
         at = list(image = "absentt"),
         adjust = "none",
-        lmerTest.limit = 4512)
+        lmerTest.limit = 4512) %>% confint()
 
 (.48 / (7-1)) * 100 #  mimicry pose effect size
 (.20 / (7-1)) * 100 #  directd pose effect size
@@ -271,14 +271,14 @@ anova(models[["secondary"]][["compl.diff"]])
 emmeans(models[["secondary"]][["compl.diff"]], 
         pairwise ~ image,
         adjust = "none",
-        pbkrtest.limit = 3878)
+        pbkrtest.limit = 3878) %>% confint()
 
 (.03 / (7-1)) * 100 #  image effect size
 
 emmeans(models[["secondary"]][["compl.diff"]], 
         pairwise ~ condition,
         adjust = "none",
-        pbkrtest.limit = 3878)
+        pbkrtest.limit = 3878) %>% confint()
 
 (.15 / (7-1)) * 100 #  mimicry - directd effect size
 (.25 / (7-1)) * 100 #  mimicry - pen effect size
@@ -324,14 +324,14 @@ anova(models[["secondary"]][["simil.diff"]])
 emmeans(models[["secondary"]][["simil.diff"]], 
         pairwise ~ image,
         adjust = "none",
-        lmerTest.limit = 3878)
+        lmerTest.limit = 3878) %>% confint()
 
 (.12 / (7-1)) * 100 #  image effect size
 
 emmeans(models[["secondary"]][["simil.diff"]], 
         pairwise ~ condition,
         adjust = "none",
-        lmerTest.limit = 3878)
+        lmerTest.limit = 3878) %>% confint()
 
 (.23 / (7-1)) * 100 #  mimicry - directd effect size
 (.24 / (7-1)) * 100 #  mimicry - pen effect size
@@ -386,14 +386,14 @@ anova(models[["secondary"]][["gen.diff"]])
 emmeans(models[["secondary"]][["gen.diff"]], 
         pairwise ~ image,
         adjust = "none",
-        lmerTest.limit = 3878)
+        lmerTest.limit = 3878) %>% confint()
 
 (.23 / (7-1)) * 100 # image effect size
 
 emmeans(models[["secondary"]][["gen.diff"]], 
         pairwise ~ condition,
         adjust = "none",
-        lmerTest.limit = 3878)
+        lmerTest.limit = 3878) %>% confint()
 
 (1.15 / (7-1)) * 100 #  mimicry - pen effect size
 (.89 / (7-1)) * 100 #  directd - pen effect size
@@ -445,7 +445,7 @@ anova(models[["secondary"]][["awareness.diff"]])
 emmeans(models[["secondary"]][["awareness.diff"]], 
         pairwise ~ condition,
         adjust = "none",
-        lmerTest.limit = 4512)
+        lmerTest.limit = 4512) %>% confint()
 
 (0.481 / (7-1)) * 100 # pen - directd
 (0.269 / (7-1)) * 100 # pen - mimicry
@@ -568,14 +568,14 @@ anova(models[["secondary"]][["anxiety"]])
 emmeans(models[["secondary"]][["anxiety"]], 
         pairwise ~ trial,
         adjust = "none",
-        lmerTest.limit = 3008)
+        lmerTest.limit = 3008) %>% confint()
 
 (.01 / (7-1)) * 100 #  pose effect size
 
 emmeans(models[["secondary"]][["anxiety"]], 
         pairwise ~ condition,
         adjust = "none",
-        lmerTest.limit = 3008)
+        lmerTest.limit = 3008) %>% confint()
 
 (.13 / (7-1)) * 100 #  mimicry vs. pen
 (.17 / (7-1)) * 100 #  directd vs. pen
@@ -624,14 +624,14 @@ anova(models[["secondary"]][["anger"]])
 emmeans(models[["secondary"]][["anger"]], 
         pairwise ~ trial,
         adjust = "none",
-        lmerTest.limit = 3008)
+        lmerTest.limit = 3008) %>% confint()
 
 (.02 / (7-1)) * 100 #  pose effect size
 
 emmeans(models[["secondary"]][["anger"]], 
         pairwise ~ condition,
         adjust = "none",
-        lmerTest.limit = 3008)
+        lmerTest.limit = 3008) %>% confint()
 
 (.14 / (7-1)) * 100 #  mimicry vs. pen
 (.12 / (7-1)) * 100 #  directd vs. pen
@@ -675,6 +675,7 @@ models[["secondary"]][["compl.mod"]] <-
 
 # inspect results
 summary(models[["secondary"]][["compl.mod"]])
+# confint(models[["secondary"]][["compl.mod"]])
 anova(models[["secondary"]][["compl.mod"]])
 
 emmeans(models[["secondary"]][["compl.mod"]], 
@@ -835,7 +836,7 @@ joint_tests(models[["exploratory"]][["primary.noexc"]],
 # descriptives
 emmeans(models[["exploratory"]][["primary.noexc"]],
         pairwise ~ trial | condition,
-        adjust = "none") %>% confint
+        adjust = "none") %>% confint()
 
 (.14 / (7-1)) * 100 #  pen pose effect
 ```
