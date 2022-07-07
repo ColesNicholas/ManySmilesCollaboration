@@ -491,9 +491,13 @@ models[["secondary"]][["awareness.mod"]] <-
        data = DF.l)
 
 # inspect results
+models[["secondary"]][["awareness.mod"]] %>% summary()
+
 models[["secondary"]][["awareness.mod"]] %>% anova()
 
-models[["secondary"]][["awareness.mod"]] %>% summary()
+# 95% CI for trial:awareness.c
+0.07866 + (1.96  * 0.01042)
+0.07866 - (1.96  * 0.01042)
 ```
 
 ###### Without random slopes
@@ -528,8 +532,12 @@ models[["secondary"]][["body.aware.mod"]] <-
        data = DF.l.inc)
 
 # inspect results
-models[["secondary"]][["body.aware.mod"]] %>% anova()
 models[["secondary"]][["body.aware.mod"]] %>% summary()
+models[["secondary"]][["body.aware.mod"]] %>% anova()
+
+# 95% CI for trial:awareness.c
+0.0002455 + (1.96  * 0.0167927)
+0.0002455 - (1.96  * 0.0167927)
 ```
 
 ##### Without random slopes
@@ -675,12 +683,16 @@ models[["secondary"]][["compl.mod"]] <-
 
 # inspect results
 summary(models[["secondary"]][["compl.mod"]])
-# confint(models[["secondary"]][["compl.mod"]])
+
 anova(models[["secondary"]][["compl.mod"]])
 
 emmeans(models[["secondary"]][["compl.mod"]], 
         pairwise ~ trial,
         adjust = "none")
+
+# 95% CI for trial:qulty_rate_var.c
+0.082516 + (1.96  * 0.019042)
+0.082516 - (1.96  * 0.019042)
 ```
 
 ###### Without random slopes
@@ -717,6 +729,10 @@ models[["secondary"]][["simil.mod"]] <-
 # inspect results
 summary(models[["secondary"]][["simil.mod"]])
 anova(models[["secondary"]][["simil.mod"]])
+
+# 95% CI for trial:qulty_smlr_var.c
+0.034951 + (1.96  * 0.010373)
+0.034951 - (1.96  * 0.010373)
 ```
 
 ###### Without random slopes
@@ -753,6 +769,10 @@ models[["secondary"]][["gen.mod"]] <-
 # inspect results
 summary(models[["secondary"]][["gen.mod"]])
 anova(models[["secondary"]][["gen.mod"]])
+
+# 95% CI for trial:qulty_smlr_var.c
+0.0770711 + (1.96  * 0.0072917)
+0.0770711 - (1.96  * 0.0072917)
 ```
 
 ###### Without random slopes
