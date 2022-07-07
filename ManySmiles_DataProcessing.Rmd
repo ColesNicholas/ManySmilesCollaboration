@@ -590,5 +590,6 @@ write_rds(DF.l.inc, "data/processed/DF.l.inc.rds")
 DF.w %>% 
   group_by(country) %>% 
   summarise(n = length(unique(ResponseId))) %>% 
-  write.csv("data/country.n.csv")
+  write.csv("data/source/Fig1_Source.csv",
+            row.names = F)
 ```

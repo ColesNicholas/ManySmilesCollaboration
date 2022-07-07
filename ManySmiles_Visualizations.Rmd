@@ -152,7 +152,7 @@ world <- ne_countries(scale = "medium",
                       returnclass = "sf")
 
 # download msc country data
-msc <- read.csv("data/country.n.csv")[, 2:3] %>% 
+msc <- read.csv("data/source/Fig1_Source.csv")[, 2:3] %>% 
   arrange(n) %>% 
   rename(iso_a3 = country)
 
@@ -190,10 +190,6 @@ ggplot() +
         panel.grid.major = element_line(size = .2))
 
 dev.off()
-
-write.csv(x = msc,
-          file = "data/source/Fig1_Source.csv",
-          row.names = F)
 
 rm(msc, msworld, world)
 ```
