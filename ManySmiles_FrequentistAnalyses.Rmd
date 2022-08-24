@@ -85,13 +85,24 @@ DF.w %>%
             g.men = sum(indiv_gend_var == 2, na.rm = T) / n(),
             g.other = sum(indiv_gend_var == 3, na.rm = T) / n(),
             
-            # inclusion criteria pass rate
-            inc.dev = mean(inc.dev),
-            inc.att = mean(inc.att),
-            inc.fol = mean(inc.fol),
-            inc.mat = mean(inc.mat),
-            inc.dis = sum(inc.dis, na.rm = T) / n(),
-            inc.awa = sum(inc.awa, na.rm = T) / n()
+            # inclusion criteria fail rate
+            inc.dev.n = n() - sum(inc.dev),
+            inc.dev.p = 1 - mean(inc.dev),
+            
+            inc.att.n = n() - sum(inc.att),
+            inc.att.p = 1 - mean(inc.att),
+            
+            inc.fol.n = n() - sum(inc.fol),
+            inc.fol.p = 1 - mean(inc.fol),
+            
+            inc.mat.n = n() - sum(inc.mat),
+            inc.mat.p = 1 - mean(inc.mat),
+            
+            inc.dis.n = n() - sum(inc.dis, na.rm = T),
+            inc.dis.p = inc.dis.n / n(),
+            
+            inc.awa.n = n() - sum(inc.awa, na.rm = T),
+            inc.awa.p = inc.awa.n / n()
             )
 
 # n participants who met inclusion criteria

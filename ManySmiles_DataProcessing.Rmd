@@ -268,17 +268,17 @@ rm(coder, coder1, coder2, coding.DF, c, countries)
 ## Clean data
 Remove test data and select relevant variables
 ```{r}
-DF <- DF %>% 
-  # remove test data
+DF <- DF %>% # 5817
+  # remove test data (5633 remaining)
   filter(DistributionChannel != 'preview') %>% 
   
   # remove participants who did not indicate that they (a) had a pen nearby, (b) completed the study on a computer, and (c) were in a setting with minimal distractions 
   #filter(intro_filt == "1,2,3") %>% 
   
-  # remove participants who did not get through most of survey
+  # remove participants who did not get through most of survey (4198 remaining)
   filter(Progress > 90) %>% 
   
-  # remove participants who did not answer any of the emotion reports
+  # remove participants who did not answer any of the emotion reports (3878 remaining)
   filter(!is.na(fil.1_emot_hap)) %>% 
   
   # select relevant variables
