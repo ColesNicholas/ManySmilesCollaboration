@@ -103,7 +103,7 @@ tmp3 <- full_join(tmp, tmp2)
 rm(tmp, tmp2)
 
 # prepare plot  
-png(filename = "figures/presentation/Figure1.png", 
+png(filename = "output/figures/presentation/Figure1.png", 
     units = "in", 
     height = 7, 
     width = 6.5, 
@@ -133,9 +133,11 @@ ggplot(DF.viz,
                size = 1,
                aes(group = 1)) +
   
-  stat_summary(colour = "#3366FF", 
-               size = .5,
-               fun = "mean") +
+    stat_summary(colour = "#3366FF", 
+               size = 1,
+               width = .10,
+               fun.data = mean_se,
+               geom = "errorbar") +
   
   # add task-specific M's and SDs
   geom_text(data = tmp3,
@@ -147,12 +149,12 @@ ggplot(DF.viz,
             vjust = 2) +
   
   # add condition-specific ns
-  geom_text(data = tmp3,
-            aes(label = paste0("n = ", n)),
-            x = 2.5,
-            y = Inf,
-            size = 2,
-            vjust = 2) +
+  # geom_text(data = tmp3,
+  #           aes(label = paste0("n = ", n)),
+  #           x = 2.5,
+  #           y = Inf,
+  #           size = 2,
+  #           vjust = 2) +
   
   # adjust scales
   scale_x_discrete(
