@@ -117,10 +117,11 @@ models <- list()
 ```
 
 ```{r}
-m1 <- lmer(happiness ~ trial + image + 
-             (1 + image | country) + 
+m1 <- lmer(happiness ~ trial + 
+             (1 + trial | country) + 
              (1 | ResponseId),
            data = DF.l.inc)
+summary(m1)
 
 m2 <- lmer(happiness ~ trial + image + 
              (1 + trial + image | country) + 
